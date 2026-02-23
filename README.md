@@ -6,7 +6,7 @@ MVP web para etiquetas de segurança alimentar com impressão automática em Zeb
 - Next.js 14 (App Router + TypeScript)
 - Prisma + PostgreSQL (Prisma Postgres no Vercel)
 - Auth.js (NextAuth) com Credentials
-- QZ Tray no front-end para impressão RAW ZPL
+- QZ Tray no front-end para impressão RAW ZPL (lib `qz-tray`)
 
 ## Requisitos
 1. Node.js 20+
@@ -55,7 +55,8 @@ Checklist rápido:
    - Se não encontrar, selecione manualmente no dropdown (fica salvo no localStorage)
 5. Selecione item + método + quantidade e clique **IMPRIMIR**
 6. Front chama `POST /api/prints`, registra rastreabilidade e recebe ZPL
-7. Front envia ZPL RAW para QZ Tray automaticamente
+7. Front conecta com `qz.websocket.connect()` e envia ZPL RAW para QZ Tray automaticamente
+   - Script do QZ é carregado via `https://unpkg.com/qz-tray@2.2.5/qz-tray.js`
 
 ## Assinatura QZ (dev/prod)
 - MVP roda em modo dev (diálogos do QZ Tray podem aparecer).
