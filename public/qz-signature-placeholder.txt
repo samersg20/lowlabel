@@ -1,0 +1,2 @@
+Placeholder para futura assinatura de mensagens QZ Tray.
+Em produção, configure certificados e assinatura digital conforme documentação oficial da QZ.
