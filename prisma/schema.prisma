@@ -33,11 +33,17 @@ model Item {
   group        ItemGroup?  @relation(fields: [groupId], references: [id], onDelete: SetNull)
   sif          String?
   notes        String?
-  chilledHours Int?
-  frozenHours  Int?
-  ambientHours Int?
-  hotHours     Int?
-  thawingHours Int?
+  chilledHours        Int?
+  frozenHours         Int?
+  ambientHours        Int?
+  hotHours            Int?
+  thawingHours        Int?
+  methodQuente        Boolean @default(false)
+  methodPistaFria     Boolean @default(false)
+  methodDescongelando Boolean @default(false)
+  methodResfriado     Boolean @default(false)
+  methodCongelado     Boolean @default(false)
+  methodAmbienteSecos Boolean @default(false)
   prints       LabelPrint[]
   createdAt    DateTime    @default(now())
   updatedAt    DateTime    @updatedAt

@@ -1,22 +1,25 @@
 import { auth } from "@/lib/auth";
+import { STORAGE_METHOD_RULES, type StorageMethod } from "@/lib/constants";
 import { prisma } from "@/lib/prisma";
 import { makeZplLabel } from "@/lib/zpl";
 import { NextResponse } from "next/server";
 
-function getShelfLifeDays(item: any, method: string): number | null {
+function isMethodEnabledForItem(item: any, method: StorageMethod): boolean {
   switch (method) {
-    case "RESFRIADO":
-      return item.chilledHours;
-    case "CONGELADO":
-      return item.frozenHours;
-    case "AMBIENTE":
-      return item.ambientHours;
     case "QUENTE":
-      return item.hotHours;
+      return Boolean(item.methodQuente);
+    case "PISTA FRIA":
+      return Boolean(item.methodPistaFria);
     case "DESCONGELANDO":
-      return item.thawingHours;
+      return Boolean(item.methodDescongelando);
+    case "RESFRIADO":
+      return Boolean(item.methodResfriado);
+    case "CONGELADO":
+      return Boolean(item.methodCongelado);
+    case "AMBIENTE SECOS":
+      return Boolean(item.methodAmbienteSecos);
     default:
-      return null;
+      return false;
   }
 }
 
@@ -30,22 +33,27 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Quantidade deve estar entre 1 e 50" }, { status: 400 });
   }
 
+  const storageMethod = body.storageMethod as StorageMethod;
+  const methodRule = STORAGE_METHOD_RULES[storageMethod];
+  if (!methodRule) {
+    return NextResponse.json({ error: "Método inválido" }, { status: 400 });
+  }
+
   const item = await prisma.item.findUnique({ where: { id: body.itemId } });
   if (!item) return NextResponse.json({ error: "Item não encontrado" }, { status: 404 });
 
-  const shelfLifeDays = getShelfLifeDays(item, body.storageMethod);
-  if (!Number.isInteger(shelfLifeDays) || (shelfLifeDays ?? 0) < 1) {
-    return NextResponse.json({ error: "Shelf life em dias não cadastrado para este método" }, { status: 400 });
+  if (!isMethodEnabledForItem(item, storageMethod)) {
+    return NextResponse.json({ error: "Método não habilitado para este produto" }, { status: 400 });
   }
 
-  const shelfLifeDaysValue = shelfLifeDays as number;
   const producedAt = new Date();
-  const expiresAt = new Date(producedAt.getTime() + shelfLifeDaysValue * 24 * 60 * 60 * 1000);
+  const multiplier = methodRule.unit === "hours" ? 60 * 60 * 1000 : 24 * 60 * 60 * 1000;
+  const expiresAt = new Date(producedAt.getTime() + methodRule.amount * multiplier);
 
   const print = await prisma.labelPrint.create({
     data: {
       itemId: item.id,
-      storageMethod: body.storageMethod,
+      storageMethod,
       producedAt,
       expiresAt,
       userId: session.user.id,
@@ -55,7 +63,7 @@ export async function POST(req: Request) {
 
   const zpl = makeZplLabel({
     name: item.name,
-    storageMethod: body.storageMethod,
+    storageMethod,
     producedAt,
     expiresAt,
     userName: session.user.name,
@@ -69,7 +77,7 @@ export async function POST(req: Request) {
     user: session.user,
     producedAt,
     expiresAt,
-    storageMethod: body.storageMethod,
+    storageMethod,
     zpl,
   });
 }

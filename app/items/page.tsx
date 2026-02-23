@@ -1,5 +1,6 @@
 "use client";
 
+import { STORAGE_METHODS } from "@/lib/constants";
 import { useEffect, useState } from "react";
 
 type Group = { id: string; name: string };
@@ -10,11 +11,12 @@ type Item = {
   group?: Group | null;
   sif?: string | null;
   notes?: string | null;
-  chilledHours?: number | null;
-  frozenHours?: number | null;
-  ambientHours?: number | null;
-  hotHours?: number | null;
-  thawingHours?: number | null;
+  methodQuente?: boolean;
+  methodPistaFria?: boolean;
+  methodDescongelando?: boolean;
+  methodResfriado?: boolean;
+  methodCongelado?: boolean;
+  methodAmbienteSecos?: boolean;
 };
 
 const empty = {
@@ -22,11 +24,21 @@ const empty = {
   groupId: "",
   sif: "",
   notes: "",
-  chilledHours: "",
-  frozenHours: "",
-  ambientHours: "",
-  hotHours: "",
-  thawingHours: "",
+  methodQuente: false,
+  methodPistaFria: false,
+  methodDescongelando: false,
+  methodResfriado: false,
+  methodCongelado: false,
+  methodAmbienteSecos: false,
+};
+
+const methodFieldByLabel: Record<string, keyof typeof empty> = {
+  QUENTE: "methodQuente",
+  "PISTA FRIA": "methodPistaFria",
+  DESCONGELANDO: "methodDescongelando",
+  RESFRIADO: "methodResfriado",
+  CONGELADO: "methodCongelado",
+  "AMBIENTE SECOS": "methodAmbienteSecos",
 };
 
 export default function ItemsPage() {
@@ -62,11 +74,6 @@ export default function ItemsPage() {
     const payload = {
       ...form,
       groupId: form.groupId || null,
-      chilledHours: form.chilledHours ? Number(form.chilledHours) : null,
-      frozenHours: form.frozenHours ? Number(form.frozenHours) : null,
-      ambientHours: form.ambientHours ? Number(form.ambientHours) : null,
-      hotHours: form.hotHours ? Number(form.hotHours) : null,
-      thawingHours: form.thawingHours ? Number(form.thawingHours) : null,
     };
 
     const res = await fetch(`/api/items${editingId ? `/${editingId}` : ""}`, {
@@ -94,14 +101,15 @@ export default function ItemsPage() {
   function startEdit(item: Item) {
     setEditingId(item.id);
     setForm({
+      ...empty,
       ...item,
       groupId: item.groupId ?? "",
-      chilledHours: item.chilledHours ?? "",
-      frozenHours: item.frozenHours ?? "",
-      ambientHours: item.ambientHours ?? "",
-      hotHours: item.hotHours ?? "",
-      thawingHours: item.thawingHours ?? "",
     });
+  }
+
+  function enabledMethods(item: Item) {
+    const active = STORAGE_METHODS.filter((label) => item[methodFieldByLabel[label]]);
+    return active.length ? active.join(", ") : "-";
   }
 
   return (
@@ -132,13 +140,24 @@ export default function ItemsPage() {
           </label>
           <label>SIF<input placeholder="SIF (opcional)" value={form.sif} onChange={(e) => setForm({ ...form, sif: e.target.value })} /></label>
 
-          <label>Resfriado<input placeholder="Resfriado (dias)" type="number" value={form.chilledHours} onChange={(e) => setForm({ ...form, chilledHours: e.target.value })} /></label>
-          <label>Congelado<input placeholder="Congelado (dias)" type="number" value={form.frozenHours} onChange={(e) => setForm({ ...form, frozenHours: e.target.value })} /></label>
-          <label>Ambiente<input placeholder="Ambiente (dias)" type="number" value={form.ambientHours} onChange={(e) => setForm({ ...form, ambientHours: e.target.value })} /></label>
+          <label style={{ gridColumn: "1 / -1" }}>Métodos aplicáveis</label>
+          <div style={{ gridColumn: "1 / -1", display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 8 }}>
+            {STORAGE_METHODS.map((method) => {
+              const field = methodFieldByLabel[method];
+              return (
+                <label key={method} style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                  <input
+                    type="checkbox"
+                    checked={Boolean(form[field])}
+                    onChange={(e) => setForm({ ...form, [field]: e.target.checked })}
+                  />
+                  {method}
+                </label>
+              );
+            })}
+          </div>
 
-          <label>Quente<input placeholder="Quente (dias)" type="number" value={form.hotHours} onChange={(e) => setForm({ ...form, hotHours: e.target.value })} /></label>
-          <label>Descongelando<input placeholder="Descongelando (dias)" type="number" value={form.thawingHours} onChange={(e) => setForm({ ...form, thawingHours: e.target.value })} /></label>
-          <label>Observações<textarea placeholder="Observações" value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} /></label>
+          <label style={{ gridColumn: "1 / -1" }}>Observações<textarea placeholder="Observações" value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} /></label>
 
           <button type="submit">{editingId ? "Salvar" : "Criar"}</button>
         </form>
@@ -148,14 +167,14 @@ export default function ItemsPage() {
       <div className="card">
         <table className="table">
           <thead>
-            <tr><th>Nome</th><th>Grupo</th><th>Shelf life (dias)</th><th>Ações</th></tr>
+            <tr><th>Nome</th><th>Grupo</th><th>Métodos</th><th>Ações</th></tr>
           </thead>
           <tbody>
             {items.map((item) => (
               <tr key={item.id}>
                 <td>{item.name}</td>
                 <td>{item.group?.name || "-"}</td>
-                <td>R:{item.chilledHours ?? "-"} C:{item.frozenHours ?? "-"} A:{item.ambientHours ?? "-"} Q:{item.hotHours ?? "-"} D:{item.thawingHours ?? "-"}</td>
+                <td>{enabledMethods(item)}</td>
                 <td>
                   <button className="secondary" onClick={() => startEdit(item)}>Editar</button>{" "}
                   <button className="danger" onClick={() => remove(item.id)}>Excluir</button>

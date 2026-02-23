@@ -8,11 +8,12 @@ import { ensureQzConnected, getPreferredPrinter, listPrinters, printRawZpl, save
 type Item = {
   id: string;
   name: string;
-  chilledHours?: number | null;
-  frozenHours?: number | null;
-  ambientHours?: number | null;
-  hotHours?: number | null;
-  thawingHours?: number | null;
+  methodQuente?: boolean;
+  methodPistaFria?: boolean;
+  methodDescongelando?: boolean;
+  methodResfriado?: boolean;
+  methodCongelado?: boolean;
+  methodAmbienteSecos?: boolean;
 };
 
 export default function PrintPage() {
@@ -39,11 +40,12 @@ export default function PrintPage() {
   const availableMethods = useMemo(() => {
     if (!selectedItem) return [] as string[];
     return STORAGE_METHODS.filter((m) => {
-      if (m === "RESFRIADO") return (selectedItem.chilledHours ?? 0) > 0;
-      if (m === "CONGELADO") return (selectedItem.frozenHours ?? 0) > 0;
-      if (m === "AMBIENTE") return (selectedItem.ambientHours ?? 0) > 0;
-      if (m === "QUENTE") return (selectedItem.hotHours ?? 0) > 0;
-      if (m === "DESCONGELANDO") return (selectedItem.thawingHours ?? 0) > 0;
+      if (m === "QUENTE") return Boolean(selectedItem.methodQuente);
+      if (m === "PISTA FRIA") return Boolean(selectedItem.methodPistaFria);
+      if (m === "DESCONGELANDO") return Boolean(selectedItem.methodDescongelando);
+      if (m === "RESFRIADO") return Boolean(selectedItem.methodResfriado);
+      if (m === "CONGELADO") return Boolean(selectedItem.methodCongelado);
+      if (m === "AMBIENTE SECOS") return Boolean(selectedItem.methodAmbienteSecos);
       return false;
     });
   }, [selectedItem]);

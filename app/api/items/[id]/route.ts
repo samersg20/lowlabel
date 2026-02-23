@@ -19,6 +19,12 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
       ambientHours: body.ambientHours,
       hotHours: body.hotHours,
       thawingHours: body.thawingHours,
+      methodQuente: Boolean(body.methodQuente),
+      methodPistaFria: Boolean(body.methodPistaFria),
+      methodDescongelando: Boolean(body.methodDescongelando),
+      methodResfriado: Boolean(body.methodResfriado),
+      methodCongelado: Boolean(body.methodCongelado),
+      methodAmbienteSecos: Boolean(body.methodAmbienteSecos),
     },
     include: { group: true },
   });

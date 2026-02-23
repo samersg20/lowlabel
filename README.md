@@ -53,7 +53,7 @@ Checklist rápido:
 
 ## Fluxo de impressão
 1. Faça login
-2. Cadastre itens em `/items` com shelf life em dias por método
+2. Cadastre itens em `/items` e marque os métodos válidos para cada produto
 3. Vá para `/print`
 4. Clique em **Detectar impressora**
    - Auto seleciona impressora contendo `ZDesigner ZD220`
@@ -71,8 +71,8 @@ Checklist rápido:
 - Em produção, prefira armazenar a chave privada em variável de ambiente `QZ_PRIVATE_KEY_PEM`.
 
 ## Observações
-- Métodos suportados: RESFRIADO, CONGELADO, AMBIENTE, QUENTE, DESCONGELANDO
-- Se método não tiver shelf life em dias cadastrado, emissão falha com mensagem apropriada.
+- Métodos suportados: QUENTE (3h), PISTA FRIA (3h), DESCONGELANDO (3 dias), RESFRIADO (3 dias), CONGELADO (30 dias), AMBIENTE SECOS (30 dias).
+- Se um método não estiver marcado no item, ele não aparece na tela de emissão.
 - Quantidade limitada entre 1 e 50.
 
 
@@ -101,6 +101,6 @@ O script valida automaticamente:
 
 
 ## Regra de validade da etiqueta
-- Validade baseada no shelf life configurado no cadastro do item (em dias) para o método selecionado.
+- Validade baseada na tabela fixa de métodos (horas/dias) e apenas para métodos marcados no item.
 - Exibição de data/hora formatada em fuso `America/Sao_Paulo` (Brasil).
 - Texto da etiqueta sem acentos para melhor compatibilidade de impressão térmica.
