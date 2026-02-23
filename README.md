@@ -61,7 +61,7 @@ Checklist rápido:
 ## Configuração PrintNode
 - Defina no ambiente:
   - `PRINTNODE_API_KEY`
-  - `PRINTNODE_PRINTER_ID`
+  - `PRINTNODE_PRINTER_ID` (ou `PRINTNODE_PRINT_ID`)
 - O backend usa autenticação Basic (`apiKey:`) e envia conteúdo `raw_base64` para o endpoint oficial do PrintNode.
 
 ## Observações

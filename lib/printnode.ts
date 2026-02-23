@@ -2,7 +2,7 @@ const PRINTNODE_API_BASE = "https://api.printnode.com";
 
 function getPrintNodeConfig() {
   const apiKey = process.env.PRINTNODE_API_KEY;
-  const printerIdRaw = process.env.PRINTNODE_PRINTER_ID;
+  const printerIdRaw = process.env.PRINTNODE_PRINTER_ID ?? process.env.PRINTNODE_PRINT_ID;
 
   if (!apiKey) {
     throw new Error("PRINTNODE_API_KEY não configurada");
@@ -10,7 +10,7 @@ function getPrintNodeConfig() {
 
   const printerId = Number(printerIdRaw);
   if (!Number.isInteger(printerId) || printerId <= 0) {
-    throw new Error("PRINTNODE_PRINTER_ID inválido");
+    throw new Error("PRINTNODE_PRINTER_ID/PRINTNODE_PRINT_ID inválido");
   }
 
   return { apiKey, printerId };
