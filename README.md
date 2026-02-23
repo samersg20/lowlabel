@@ -1,18 +1,17 @@
 # SafeLabel MVP
 
-MVP web para etiquetas de segurança alimentar com impressão automática em Zebra ZD220t via QZ Tray.
+MVP web para etiquetas de segurança alimentar com impressão automática via PrintNode.
 
 ## Stack
 - Next.js 14 (App Router + TypeScript)
 - Prisma + PostgreSQL (Prisma Postgres no Vercel)
 - Auth.js (NextAuth) com Credentials
-- QZ Tray no front-end para impressão RAW ZPL (lib `qz-tray`)
+- PrintNode API para impressão silenciosa RAW ZPL
 
 ## Requisitos
 1. Node.js 20+
-2. QZ Tray instalado e em execução (https://qz.io/download)
-3. Driver da Zebra ZD220 instalado no Windows/macOS/Linux
-4. Impressora aparecendo no sistema como `ZDesigner ZD220...` (auto seleção) ou nome compatível
+2. Conta no PrintNode com impressora conectada
+3. `PRINTNODE_API_KEY` e `PRINTNODE_PRINTER_ID` configurados no ambiente
 
 ## Setup
 ```bash
@@ -55,20 +54,15 @@ Checklist rápido:
 1. Faça login
 2. Cadastre itens em `/items` e marque os métodos válidos para cada produto
 3. Vá para `/print`
-4. Clique em **Detectar impressora**
-   - Auto seleciona impressora contendo `ZDesigner ZD220`
-   - Se não encontrar, selecione manualmente no dropdown (fica salvo no localStorage)
-5. Selecione item + método + quantidade e clique **IMPRIMIR**
-6. Front chama `POST /api/prints`, registra rastreabilidade e recebe ZPL
-7. Front conecta com `qz.websocket.connect()` e envia ZPL RAW para QZ Tray automaticamente
-   - Script do QZ é carregado via `https://unpkg.com/qz-tray@2.2.5/qz-tray.js`
+4. Selecione item + método + quantidade e clique **IMPRIMIR**
+5. Front chama `POST /api/prints`.
+6. Back registra rastreabilidade, gera ZPL e envia para PrintNode (`POST /printjobs`) de forma silenciosa.
 
-## Assinatura QZ (dev/prod)
-- O projeto já inclui um par de chaves para assinatura digital do QZ Tray:
-  - Certificado público: `public/qz/certificate.pem`
-  - Chave privada: `qz-signing/private-key.pem`
-- A assinatura é feita no endpoint `POST /api/sign` (usado pelo front antes de `qz.websocket.connect()`), recebendo `request` e retornando assinatura Base64 RSA-SHA512.
-- Em produção, prefira armazenar a chave privada em variável de ambiente `QZ_PRIVATE_KEY_PEM`.
+## Configuração PrintNode
+- Defina no ambiente:
+  - `PRINTNODE_API_KEY`
+  - `PRINTNODE_PRINTER_ID`
+- O backend usa autenticação Basic (`apiKey:`) e envia conteúdo `raw_base64` para o endpoint oficial do PrintNode.
 
 ## Observações
 - Métodos suportados: QUENTE (3h), PISTA FRIA (3h), DESCONGELANDO (3 dias), RESFRIADO (3 dias), CONGELADO (30 dias), AMBIENTE SECOS (30 dias).

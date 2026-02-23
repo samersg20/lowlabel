@@ -1,9 +1,7 @@
 "use client";
 
-import Script from "next/script";
 import { useEffect, useMemo, useState } from "react";
 import { STORAGE_METHODS } from "@/lib/constants";
-import { ensureQzConnected, getPreferredPrinter, listPrinters, printRawZpl, savePreferredPrinter } from "@/lib/qz";
 
 type Item = {
   id: string;
@@ -23,8 +21,6 @@ export default function PrintPage() {
   const [quantity, setQuantity] = useState(1);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
-  const [printer, setPrinter] = useState<string>("");
-  const [printers, setPrinters] = useState<string[]>([]);
 
   useEffect(() => {
     fetch("/api/items")
@@ -56,35 +52,11 @@ export default function PrintPage() {
     }
   }, [availableMethods, storageMethod]);
 
-  async function detectPrinter() {
-    setError("");
-    setMessage("");
-    try {
-      await ensureQzConnected();
-      const preferred = await getPreferredPrinter();
-      const all = await listPrinters();
-      setPrinters(all);
-      if (preferred) {
-        setPrinter(preferred);
-        setMessage(`Impressora detectada automaticamente: ${preferred}`);
-      } else {
-        setMessage("QZ conectado. Selecione uma impressora na lista.");
-      }
-    } catch (e: any) {
-      setError(e.message || "Falha ao conectar no QZ Tray");
-    }
-  }
-
   async function onPrint() {
     setError("");
     setMessage("");
 
     try {
-      if (!printer) {
-        await detectPrinter();
-        throw new Error("Selecione uma impressora antes de imprimir.");
-      }
-
       if (!storageMethod) throw new Error("Selecione um método válido para o item");
 
       const res = await fetch("/api/prints", {
@@ -96,11 +68,7 @@ export default function PrintPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Falha na emissão");
 
-      for (let i = 0; i < quantity; i += 1) {
-        await printRawZpl(printer, data.zpl);
-      }
-
-      setMessage(`Etiqueta enviada (${quantity}x) para ${printer}`);
+      setMessage(`Etiqueta enviada ao PrintNode (${quantity}x). Jobs: ${data.jobIds?.join(", ") || "ok"}`);
     } catch (e: any) {
       setError(e.message || "Erro ao imprimir");
     }
@@ -108,8 +76,13 @@ export default function PrintPage() {
 
   return (
     <>
-      <Script src="https://unpkg.com/qz-tray@2.2.5/qz-tray.js" strategy="afterInteractive" />
       <h1>Emitir Etiqueta</h1>
+      <div className="card">
+        <p style={{ marginTop: 0 }}>
+          Integração ativa com <strong>PrintNode</strong>. Configure <code>PRINTNODE_API_KEY</code> e
+          <code> PRINTNODE_PRINTER_ID</code> no ambiente para impressão silenciosa.
+        </p>
+      </div>
       <div className="card grid grid-2">
         <label>
           Item
@@ -129,17 +102,6 @@ export default function PrintPage() {
           Quantidade (1-50)
           <input type="number" min={1} max={50} value={quantity} onChange={(e) => setQuantity(Number(e.target.value))} />
         </label>
-
-        <div>
-          <button type="button" className="secondary" onClick={detectPrinter}>Detectar impressora</button>
-          {printers.length > 0 && (
-            <select value={printer} onChange={(e) => { setPrinter(e.target.value); savePreferredPrinter(e.target.value); }}>
-              <option value="">Selecione impressora</option>
-              {printers.map((p) => <option key={p} value={p}>{p}</option>)}
-            </select>
-          )}
-          <div style={{ fontSize: 12, marginTop: 6 }}>Selecionada: {printer || "nenhuma"}</div>
-        </div>
 
         <button type="button" onClick={onPrint}>IMPRIMIR</button>
       </div>

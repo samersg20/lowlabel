@@ -2,6 +2,7 @@ import { auth } from "@/lib/auth";
 import { STORAGE_METHOD_RULES, type StorageMethod } from "@/lib/constants";
 import { prisma } from "@/lib/prisma";
 import { makeZplLabel } from "@/lib/zpl";
+import { submitRawZplToPrintNode } from "@/lib/printnode";
 import { NextResponse } from "next/server";
 
 function isMethodEnabledForItem(item: any, method: StorageMethod): boolean {
@@ -70,6 +71,8 @@ export async function POST(req: Request) {
     sif: item.sif,
   });
 
+  const jobIds = await submitRawZplToPrintNode(zpl, quantity, `Etiqueta ${item.name} - ${storageMethod}`);
+
   return NextResponse.json({
     print,
     item,
@@ -77,6 +80,6 @@ export async function POST(req: Request) {
     producedAt,
     expiresAt,
     storageMethod,
-    zpl,
+    jobIds,
   });
 }
