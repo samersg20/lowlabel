@@ -10,6 +10,7 @@ function maskApiKey(value: string) {
 export async function GET() {
   const session = await auth();
   if (!session?.user) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  if (session.user.role !== "ADMIN") return NextResponse.json({ error: "forbidden" }, { status: 403 });
 
   const rows = await prisma.printerConfig.findMany({
     orderBy: [{ unit: "asc" }, { createdAt: "desc" }],
@@ -30,6 +31,7 @@ export async function GET() {
 export async function POST(req: Request) {
   const session = await auth();
   if (!session?.user) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  if (session.user.role !== "ADMIN") return NextResponse.json({ error: "forbidden" }, { status: 403 });
 
   const body = await req.json();
   const unit = String(body.unit ?? "").trim();

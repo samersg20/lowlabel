@@ -38,7 +38,7 @@ button.danger { background: #9f1027; }
 }
 
 .table-wrap { width: 100%; overflow-x: auto; }
-.table { width: 100%; border-collapse: collapse; min-width: 700px; }
+.table { width: 100%; border-collapse: collapse; min-width: 620px; }
 .table th, .table td { border-bottom: 1px solid #ddd; padding: 10px 8px; text-align: left; vertical-align: top; }
 
 .nav { display:flex; gap:12px; margin-bottom:16px; align-items:center; flex-wrap: wrap; }
@@ -54,6 +54,46 @@ button.danger { background: #9f1027; }
   .container { padding: 12px; }
   .grid-3, .grid-2, .method-grid { grid-template-columns: 1fr; }
   .nav { gap: 8px; }
-  .nav a, .nav button { font-size: 14px; }
+  .nav a, .nav button, .nav-dropdown > summary { font-size: 14px; }
+  .nav-dropdown-menu { position: static; box-shadow: none; margin-top: 6px; }
   h1 { font-size: 32px; margin: 0 0 12px; }
 }
+
+
+.nav-dropdown { position: relative; }
+.nav-dropdown > summary {
+  list-style: none;
+  cursor: pointer;
+  font-weight: 700;
+  background: #eef2f6;
+  border: 1px solid #c9d4df;
+  border-radius: 8px;
+  padding: 8px 12px;
+}
+.nav-dropdown > summary::-webkit-details-marker { display: none; }
+.nav-dropdown-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  min-width: 180px;
+  background: #fff;
+  border: 1px solid #d8e0e8;
+  border-radius: 8px;
+  box-shadow: 0 8px 20px rgba(0,0,0,.08);
+  display: grid;
+  padding: 8px;
+  z-index: 20;
+}
+.nav-dropdown-menu a {
+  padding: 8px 10px;
+  border-radius: 6px;
+}
+.nav-dropdown-menu a:hover { background: #eef4f8; }
+.nav-emit {
+  background: #f08a24;
+  color: #fff;
+  border-radius: 8px;
+  padding: 8px 14px;
+  font-weight: 700;
+}
+.nav-emit:hover { background: #db7511; }

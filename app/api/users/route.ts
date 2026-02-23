@@ -6,6 +6,7 @@ import bcrypt from "bcryptjs";
 export async function GET() {
   const session = await auth();
   if (!session?.user) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  if (session.user.role !== "ADMIN") return NextResponse.json({ error: "forbidden" }, { status: 403 });
   const users = await prisma.user.findMany({
     select: { id: true, name: true, email: true, role: true, unit: true, createdAt: true },
     orderBy: { createdAt: "desc" },
@@ -16,6 +17,7 @@ export async function GET() {
 export async function POST(req: Request) {
   const session = await auth();
   if (!session?.user) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  if (session.user.role !== "ADMIN") return NextResponse.json({ error: "forbidden" }, { status: 403 });
   const body = await req.json();
   const passwordHash = await bcrypt.hash(body.password, 10);
   const created = await prisma.user.create({

@@ -5,6 +5,7 @@ import { NextResponse } from "next/server";
 export async function PUT(req: Request, { params }: { params: { id: string } }) {
   const session = await auth();
   if (!session?.user) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  if (session.user.role !== "ADMIN") return NextResponse.json({ error: "forbidden" }, { status: 403 });
   const body = await req.json();
   const updated = await prisma.item.update({
     where: { id: params.id },
@@ -34,6 +35,7 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
 export async function DELETE(_req: Request, { params }: { params: { id: string } }) {
   const session = await auth();
   if (!session?.user) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  if (session.user.role !== "ADMIN") return NextResponse.json({ error: "forbidden" }, { status: 403 });
   await prisma.item.delete({ where: { id: params.id } });
   return NextResponse.json({ ok: true });
 }
