@@ -24,6 +24,21 @@ npm run dev
 
 Acesse: `http://localhost:3000`
 
+
+## Troubleshooting `npm install` (HTTP 403)
+Se `npm install` falhar com **403 Forbidden**, geralmente é política de registro/autenticação do ambiente (não erro do código da aplicação).
+
+Checklist rápido:
+1. Verifique registro ativo:
+   - `npm config get registry` (esperado: `https://registry.npmjs.org/` para pacotes públicos)
+2. Verifique se existe `.npmrc` local ou `~/.npmrc` com override de registry/token.
+3. Se seu projeto usa registry privado, configure token:
+   - `NPM_TOKEN=...`
+   - entrada correspondente em `.npmrc` (veja `.npmrc.example`).
+4. Em rede corporativa, confirme proxy/certificados (`HTTP_PROXY`, `HTTPS_PROXY`, CA interna).
+
+> Neste ambiente de execução, o 403 ocorreu mesmo com registry público e sem `.npmrc`, indicando bloqueio/política externa do ambiente.
+
 ## Usuários seed
 - Admin: `admin@safelabel.local` / `admin123`
 - Operador: `operador@safelabel.local` / `operador123`
