@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { makeZplLabel } from "@/lib/zpl";
 import { NextResponse } from "next/server";
 
-function getShelfLife(item: any, method: string): number | null {
+function getShelfLifeDays(item: any, method: string): number | null {
   switch (method) {
     case "RESFRIADO":
       return item.chilledHours;
@@ -33,13 +33,14 @@ export async function POST(req: Request) {
   const item = await prisma.item.findUnique({ where: { id: body.itemId } });
   if (!item) return NextResponse.json({ error: "Item não encontrado" }, { status: 404 });
 
-  const shelfLifeHours = getShelfLife(item, body.storageMethod);
-  if (!shelfLifeHours) {
-    return NextResponse.json({ error: "Shelf life não cadastrado para este método" }, { status: 400 });
+  const shelfLifeDays = getShelfLifeDays(item, body.storageMethod);
+  if (!Number.isInteger(shelfLifeDays) || (shelfLifeDays ?? 0) < 1) {
+    return NextResponse.json({ error: "Shelf life em dias não cadastrado para este método" }, { status: 400 });
   }
 
+  const shelfLifeDaysValue = shelfLifeDays as number;
   const producedAt = new Date();
-  const expiresAt = new Date(producedAt.getTime() + shelfLifeHours * 60 * 60 * 1000);
+  const expiresAt = new Date(producedAt.getTime() + shelfLifeDaysValue * 24 * 60 * 60 * 1000);
 
   const print = await prisma.labelPrint.create({
     data: {

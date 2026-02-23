@@ -90,11 +90,11 @@ export default function ItemsPage() {
             <option value="PREPARACAO">PREPARACAO</option>
           </select>
           <input placeholder="SIF (opcional)" value={form.sif} onChange={(e) => setForm({ ...form, sif: e.target.value })} />
-          <input placeholder="Resfriado (h)" type="number" value={form.chilledHours} onChange={(e) => setForm({ ...form, chilledHours: e.target.value })} />
-          <input placeholder="Congelado (h)" type="number" value={form.frozenHours} onChange={(e) => setForm({ ...form, frozenHours: e.target.value })} />
-          <input placeholder="Ambiente (h)" type="number" value={form.ambientHours} onChange={(e) => setForm({ ...form, ambientHours: e.target.value })} />
-          <input placeholder="Quente (h)" type="number" value={form.hotHours} onChange={(e) => setForm({ ...form, hotHours: e.target.value })} />
-          <input placeholder="Descongelando (h)" type="number" value={form.thawingHours} onChange={(e) => setForm({ ...form, thawingHours: e.target.value })} />
+          <input placeholder="Resfriado (dias)" type="number" value={form.chilledHours} onChange={(e) => setForm({ ...form, chilledHours: e.target.value })} />
+          <input placeholder="Congelado (dias)" type="number" value={form.frozenHours} onChange={(e) => setForm({ ...form, frozenHours: e.target.value })} />
+          <input placeholder="Ambiente (dias)" type="number" value={form.ambientHours} onChange={(e) => setForm({ ...form, ambientHours: e.target.value })} />
+          <input placeholder="Quente (dias)" type="number" value={form.hotHours} onChange={(e) => setForm({ ...form, hotHours: e.target.value })} />
+          <input placeholder="Descongelando (dias)" type="number" value={form.thawingHours} onChange={(e) => setForm({ ...form, thawingHours: e.target.value })} />
           <textarea placeholder="Observações" value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
           <button type="submit">{editingId ? "Salvar" : "Criar"}</button>
         </form>
@@ -102,7 +102,7 @@ export default function ItemsPage() {
       <div className="card">
         <table className="table">
           <thead>
-            <tr><th>Nome</th><th>Tipo</th><th>Shelf life</th><th>Ações</th></tr>
+            <tr><th>Nome</th><th>Tipo</th><th>Shelf life (dias)</th><th>Ações</th></tr>
           </thead>
           <tbody>
             {items.map((item) => (

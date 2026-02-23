@@ -48,7 +48,7 @@ Checklist rápido:
 
 ## Fluxo de impressão
 1. Faça login
-2. Cadastre itens em `/items` com shelf life por método
+2. Cadastre itens em `/items` com shelf life em dias por método
 3. Vá para `/print`
 4. Clique em **Detectar impressora**
    - Auto seleciona impressora contendo `ZDesigner ZD220`
@@ -59,12 +59,15 @@ Checklist rápido:
    - Script do QZ é carregado via `https://unpkg.com/qz-tray@2.2.5/qz-tray.js`
 
 ## Assinatura QZ (dev/prod)
-- MVP roda em modo dev (diálogos do QZ Tray podem aparecer).
-- Estrutura preparada para assinatura: veja `public/qz-signature-placeholder.txt`.
+- O projeto já inclui um par de chaves para assinatura digital do QZ Tray:
+  - Certificado público: `public/qz/certificate.pem`
+  - Chave privada: `qz-signing/private-key.pem`
+- A assinatura é feita no endpoint `POST /api/qz/sign` (usado pelo front antes de `qz.websocket.connect()`).
+- Em produção, prefira armazenar a chave privada em variável de ambiente `QZ_PRIVATE_KEY_PEM`.
 
 ## Observações
 - Métodos suportados: RESFRIADO, CONGELADO, AMBIENTE, QUENTE, DESCONGELANDO
-- Se método não tiver shelf life cadastrado, emissão falha com mensagem apropriada.
+- Se método não tiver shelf life em dias cadastrado, emissão falha com mensagem apropriada.
 - Quantidade limitada entre 1 e 50.
 
 
@@ -90,3 +93,9 @@ Com `node_modules` e Prisma já presentes localmente, você pode validar a API s
 O script valida automaticamente:
 - `quantity` inválida (`"abc"`, `0`, `""`) => espera **HTTP 400**.
 - `quantity` válida (`1`) => espera **HTTP 200**.
+
+
+## Regra de validade da etiqueta
+- Validade baseada no shelf life configurado no cadastro do item (em dias) para o método selecionado.
+- Exibição de data/hora formatada em fuso `America/Sao_Paulo` (Brasil).
+- Texto da etiqueta sem acentos para melhor compatibilidade de impressão térmica.

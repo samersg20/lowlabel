@@ -7,12 +7,46 @@ declare global {
 }
 
 const PREF_KEY = "safelabel_printer";
+let securityConfigured = false;
+
+async function configureQzSecurity(client: any) {
+  if (securityConfigured) return;
+
+  client.api.setPromiseType(Promise);
+
+  client.security.setCertificatePromise(async () => {
+    const cert = await fetch("/qz/certificate.pem");
+    if (!cert.ok) throw new Error("Falha ao carregar certificado QZ");
+    return cert.text();
+  });
+
+  client.security.setSignatureAlgorithm("SHA256");
+  client.security.setSignaturePromise(async (toSign: string) => {
+    const res = await fetch("/api/qz/sign", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ data: toSign }),
+    });
+
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      throw new Error(data?.error || "Falha ao assinar payload QZ");
+    }
+
+    const data = await res.json();
+    return data.signature;
+  });
+
+  securityConfigured = true;
+}
 
 export async function ensureQzConnected() {
   const client = window.qz;
   if (!client) {
     throw new Error("Biblioteca qz-tray não carregada. Verifique se o QZ Tray script foi carregado.");
   }
+
+  await configureQzSecurity(client);
 
   if (!client.websocket.isActive()) {
     await client.websocket.connect();
