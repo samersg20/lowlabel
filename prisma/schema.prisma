@@ -7,18 +7,7 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-enum ItemType {
-  INGREDIENTE
-  PREPARACAO
-}
 
-enum StorageMethod {
-  RESFRIADO
-  CONGELADO
-  AMBIENTE
-  QUENTE
-  DESCONGELANDO
-}
 
 model User {
   id            String       @id @default(cuid())
@@ -38,7 +27,7 @@ model User {
 model Item {
   id           String      @id @default(cuid())
   name         String
-  type         ItemType
+  type         String
   sif          String?
   notes        String?
   chilledHours Int?
@@ -55,7 +44,7 @@ model LabelPrint {
   id            String        @id @default(cuid())
   itemId        String
   item          Item          @relation(fields: [itemId], references: [id], onDelete: Restrict)
-  storageMethod StorageMethod
+  storageMethod String
   producedAt    DateTime
   expiresAt     DateTime
   userId        String
