@@ -26,7 +26,7 @@ export async function POST(req: Request) {
   const body = await req.json();
 
   const quantity = Number(body.quantity);
-  if (!Number.isInteger(quantity) || quantity < 1 || quantity > 50) {
+  if (!Number.isFinite(quantity) || !Number.isInteger(quantity) || quantity < 1 || quantity > 50) {
     return NextResponse.json({ error: "Quantidade deve estar entre 1 e 50" }, { status: 400 });
   }
 

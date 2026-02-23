@@ -24,6 +24,21 @@ npm run dev
 
 Acesse: `http://localhost:3000`
 
+
+## Troubleshooting `npm install` (HTTP 403)
+Se `npm install` falhar com **403 Forbidden**, geralmente é política de registro/autenticação do ambiente (não erro do código da aplicação).
+
+Checklist rápido:
+1. Verifique registro ativo:
+   - `npm config get registry` (esperado: `https://registry.npmjs.org/` para pacotes públicos)
+2. Verifique se existe `.npmrc` local ou `~/.npmrc` com override de registry/token.
+3. Se seu projeto usa registry privado, configure token:
+   - `NPM_TOKEN=...`
+   - entrada correspondente em `.npmrc` (veja `.npmrc.example`).
+4. Em rede corporativa, confirme proxy/certificados (`HTTP_PROXY`, `HTTPS_PROXY`, CA interna).
+
+> Neste ambiente de execução, o 403 ocorreu mesmo com registry público e sem `.npmrc`, indicando bloqueio/política externa do ambiente.
+
 ## Usuários seed
 - Admin: `admin@safelabel.local` / `admin123`
 - Operador: `operador@safelabel.local` / `operador123`
@@ -47,3 +62,27 @@ Acesse: `http://localhost:3000`
 - Métodos suportados: RESFRIADO, CONGELADO, AMBIENTE, QUENTE, DESCONGELANDO
 - Se método não tiver shelf life cadastrado, emissão falha com mensagem apropriada.
 - Quantidade limitada entre 1 e 50.
+
+
+## Teste offline da API de prints (sem npm registry)
+Com `node_modules` e Prisma já presentes localmente, você pode validar a API sem instalar nada novo.
+
+1. Suba a aplicação:
+   ```bash
+   cp .env.example .env
+   npx prisma migrate dev --name init
+   npm run dev
+   ```
+2. Faça login no navegador (`/login`).
+3. Capture o cookie de sessão do NextAuth:
+   - Abra DevTools > **Application** (ou **Storage**) > **Cookies** > `http://localhost:3000`.
+   - Copie o cookie `next-auth.session-token` (em HTTP local) ou `__Secure-next-auth.session-token` (HTTPS).
+   - Monte no formato `nome=valor`.
+4. Rode o script:
+   ```bash
+   NEXTAUTH_COOKIE='next-auth.session-token=SEU_VALOR' ./test-api.sh
+   ```
+
+O script valida automaticamente:
+- `quantity` inválida (`"abc"`, `0`, `""`) => espera **HTTP 400**.
+- `quantity` válida (`1`) => espera **HTTP 200**.
