@@ -9,10 +9,16 @@ declare global {
 const PREF_KEY = "safelabel_printer";
 let securityConfigured = false;
 
+function promiseFactory(resolver: (resolve: (value?: unknown) => void, reject: (reason?: unknown) => void) => void) {
+  return new Promise(resolver);
+}
+
 async function configureQzSecurity(client: any) {
   if (securityConfigured) return;
 
-  client.api.setPromiseType(Promise);
+  // QZ calls this as a function, not as `new Promise(...)`.
+  // Passing Promise directly can throw: "Promise constructor cannot be invoked without 'new'".
+  client.api.setPromiseType(promiseFactory);
 
   client.security.setCertificatePromise(async () => {
     const cert = await fetch("/qz/certificate.pem");
