@@ -18,5 +18,8 @@ if (!/^postgres(ql)?:\/\//i.test(url)) {
   process.exit(0);
 }
 
+console.log("[build] Executando prisma migrate deploy...");
+execSync("npx prisma migrate deploy", { stdio: "inherit" });
+
 console.log("[build] Executando prisma db seed...");
 execSync("npx prisma db seed", { stdio: "inherit" });

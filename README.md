@@ -22,6 +22,7 @@ npx prisma migrate dev --name init
 npm run dev
 ```
 
+> No deploy com PostgreSQL, o build aplica `prisma migrate deploy` e depois executa seed automaticamente.
 > Para build local sem executar seed, use: `SKIP_DB_SEED=1 npm run build`.
 
 Acesse: `http://localhost:3000`
