@@ -12,16 +12,13 @@ export default withAuth(
 
     if (!isOperator(token)) return NextResponse.next();
 
+    const isHomePage = pathname === "/";
     const isPrintPage = pathname === "/print";
     const isPrintApi = pathname.startsWith("/api/prints");
     const isItemsReadApi = pathname.startsWith("/api/items") && req.method === "GET";
 
-    if (isPrintPage || isPrintApi || isItemsReadApi) {
+    if (isHomePage || isPrintPage || isPrintApi || isItemsReadApi) {
       return NextResponse.next();
-    }
-
-    if (pathname === "/") {
-      return NextResponse.redirect(new URL("/print", req.url));
     }
 
     if (pathname.startsWith("/api/")) {

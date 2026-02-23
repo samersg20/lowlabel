@@ -65,7 +65,11 @@ button.danger { background: #9f1027; }
   align-items: center;
   cursor: pointer;
   font-weight: 700;
-  padding: 8px 2px;
+  background: #e1e6eb;
+  border: 1px solid #bfcad4;
+  border-radius: 8px;
+  padding: 8px 12px;
+  color: #2f3a44;
 }
 .nav-dropdown-menu {
   position: absolute;

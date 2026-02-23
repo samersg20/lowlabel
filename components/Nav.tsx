@@ -15,7 +15,9 @@ export function Nav() {
 
   return (
     <div className="nav card">
-      <div style={{ marginRight: 8 }}><LowLogo width={92} compact /></div>
+      <Link href="/" style={{ marginRight: 8 }} aria-label="Ir para home">
+        <LowLogo width={92} compact />
+      </Link>
 
       {isAdmin && (
         <div
@@ -23,7 +25,7 @@ export function Nav() {
           onMouseEnter={() => setOpenCadastro(true)}
           onMouseLeave={() => setOpenCadastro(false)}
         >
-          <span className="nav-dropdown-trigger">Cadastro</span>
+          <span className="nav-dropdown-trigger">Cadastrar</span>
           {openCadastro && (
             <div className="nav-dropdown-menu">
               <Link href="/items">Itens</Link>
