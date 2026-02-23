@@ -88,12 +88,6 @@ export default function PrintPage() {
   return (
     <>
       <h1>Emitir Etiqueta</h1>
-      <div className="card">
-        <p style={{ marginTop: 0 }}>
-          Integração ativa com <strong>PrintNode</strong>. Configure <code>PRINTNODE_API_KEY</code> e
-          <code> PRINTNODE_PRINTER_ID</code> (ou <code>PRINTNODE_PRINT_ID</code>) no ambiente para impressão silenciosa.
-        </p>
-      </div>
       <div className="card grid grid-2">
         <label>
           Item

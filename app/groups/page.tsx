@@ -47,7 +47,7 @@ export default function GroupsPage() {
           <button type="submit">{editingId ? "Salvar grupo" : "Criar grupo"}</button>
         </form>
       </div>
-      <div className="card">
+      <div className="card table-wrap">
         <table className="table">
           <thead><tr><th>Nome</th><th>Ações</th></tr></thead>
           <tbody>

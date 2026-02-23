@@ -51,7 +51,7 @@ export default function UsersPage() {
           <button type="submit">{editingId ? "Salvar usuário" : "Criar usuário"}</button>
         </form>
       </div>
-      <div className="card">
+      <div className="card table-wrap">
         <table className="table">
           <thead><tr><th>Nome</th><th>Email</th><th>Perfil</th><th>Unidade</th><th>Ações</th></tr></thead>
           <tbody>{users.map((u) => <tr key={u.id}><td>{u.name}</td><td>{u.email}</td><td>{u.role}</td><td>{u.unit}</td><td><button className="secondary" onClick={() => startEdit(u)}>Editar</button>{" "}<button className="danger" onClick={() => remove(u.id)}>Excluir</button></td></tr>)}</tbody>
