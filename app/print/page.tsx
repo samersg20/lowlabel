@@ -1,11 +1,19 @@
 "use client";
 
 import Script from "next/script";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { STORAGE_METHODS } from "@/lib/constants";
 import { ensureQzConnected, getPreferredPrinter, listPrinters, printRawZpl, savePreferredPrinter } from "@/lib/qz";
 
-type Item = { id: string; name: string };
+type Item = {
+  id: string;
+  name: string;
+  chilledHours?: number | null;
+  frozenHours?: number | null;
+  ambientHours?: number | null;
+  hotHours?: number | null;
+  thawingHours?: number | null;
+};
 
 export default function PrintPage() {
   const [items, setItems] = useState<Item[]>([]);
@@ -25,6 +33,26 @@ export default function PrintPage() {
         if (data[0]) setItemId(data[0].id);
       });
   }, []);
+
+  const selectedItem = useMemo(() => items.find((i) => i.id === itemId), [items, itemId]);
+
+  const availableMethods = useMemo(() => {
+    if (!selectedItem) return [] as string[];
+    return STORAGE_METHODS.filter((m) => {
+      if (m === "RESFRIADO") return (selectedItem.chilledHours ?? 0) > 0;
+      if (m === "CONGELADO") return (selectedItem.frozenHours ?? 0) > 0;
+      if (m === "AMBIENTE") return (selectedItem.ambientHours ?? 0) > 0;
+      if (m === "QUENTE") return (selectedItem.hotHours ?? 0) > 0;
+      if (m === "DESCONGELANDO") return (selectedItem.thawingHours ?? 0) > 0;
+      return false;
+    });
+  }, [selectedItem]);
+
+  useEffect(() => {
+    if (!availableMethods.includes(storageMethod) && availableMethods[0]) {
+      setStorageMethod(availableMethods[0]);
+    }
+  }, [availableMethods, storageMethod]);
 
   async function detectPrinter() {
     setError("");
@@ -55,6 +83,8 @@ export default function PrintPage() {
         throw new Error("Selecione uma impressora antes de imprimir.");
       }
 
+      if (!storageMethod) throw new Error("Selecione um método válido para o item");
+
       const res = await fetch("/api/prints", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -82,62 +112,34 @@ export default function PrintPage() {
         <label>
           Item
           <select value={itemId} onChange={(e) => setItemId(e.target.value)}>
-            {items.map((i) => (
-              <option key={i.id} value={i.id}>
-                {i.name}
-              </option>
-            ))}
+            {items.map((i) => <option key={i.id} value={i.id}>{i.name}</option>)}
           </select>
         </label>
 
         <label>
           Método
           <select value={storageMethod} onChange={(e) => setStorageMethod(e.target.value)}>
-            {STORAGE_METHODS.map((m) => (
-              <option key={m} value={m}>
-                {m}
-              </option>
-            ))}
+            {availableMethods.map((m) => <option key={m} value={m}>{m}</option>)}
           </select>
         </label>
 
         <label>
           Quantidade (1-50)
-          <input
-            type="number"
-            min={1}
-            max={50}
-            value={quantity}
-            onChange={(e) => setQuantity(Number(e.target.value))}
-          />
+          <input type="number" min={1} max={50} value={quantity} onChange={(e) => setQuantity(Number(e.target.value))} />
         </label>
 
         <div>
-          <button type="button" className="secondary" onClick={detectPrinter}>
-            Detectar impressora
-          </button>
+          <button type="button" className="secondary" onClick={detectPrinter}>Detectar impressora</button>
           {printers.length > 0 && (
-            <select
-              value={printer}
-              onChange={(e) => {
-                setPrinter(e.target.value);
-                savePreferredPrinter(e.target.value);
-              }}
-            >
+            <select value={printer} onChange={(e) => { setPrinter(e.target.value); savePreferredPrinter(e.target.value); }}>
               <option value="">Selecione impressora</option>
-              {printers.map((p) => (
-                <option key={p} value={p}>
-                  {p}
-                </option>
-              ))}
+              {printers.map((p) => <option key={p} value={p}>{p}</option>)}
             </select>
           )}
           <div style={{ fontSize: 12, marginTop: 6 }}>Selecionada: {printer || "nenhuma"}</div>
         </div>
 
-        <button type="button" onClick={onPrint}>
-          IMPRIMIR
-        </button>
+        <button type="button" onClick={onPrint}>IMPRIMIR</button>
       </div>
 
       {error && <div className="card" style={{ color: "#b00020" }}>{error}</div>}

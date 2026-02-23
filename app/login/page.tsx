@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { signIn, useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { FormEvent, useEffect, useState } from "react";
@@ -18,17 +19,15 @@ export default function LoginPage() {
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
     const res = await signIn("credentials", { email, password, redirect: false });
-    if (res?.error) {
-      setError("Credenciais inválidas");
-      return;
-    }
+    if (res?.error) return setError("Credenciais inválidas");
     router.push("/print");
   }
 
   return (
-    <div className="card" style={{ maxWidth: 420, margin: "40px auto" }}>
-      <h1>SafeLabel - Login</h1>
-      <form className="grid" onSubmit={onSubmit}>
+    <div className="card" style={{ maxWidth: 460, margin: "40px auto", textAlign: "center" }}>
+      <Image src="/lowbbq-logo.svg" alt="Low BBQ" width={220} height={96} />
+      <h1>Emissor Etiquetas Low</h1>
+      <form className="grid" onSubmit={onSubmit} style={{ textAlign: "left" }}>
         <label>E-mail<input name="email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} /></label>
         <label>Senha<input name="password" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} /></label>
         <button type="submit">Entrar</button>

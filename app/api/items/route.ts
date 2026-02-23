@@ -2,10 +2,19 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 
-export async function GET() {
+export async function GET(req: Request) {
   const session = await auth();
   if (!session?.user) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
-  const items = await prisma.item.findMany({ orderBy: { name: "asc" } });
+
+  const { searchParams } = new URL(req.url);
+  const groupId = searchParams.get("groupId");
+
+  const items = await prisma.item.findMany({
+    where: groupId ? { groupId } : undefined,
+    include: { group: true },
+    orderBy: { name: "asc" },
+  });
+
   return NextResponse.json(items);
 }
 
@@ -16,7 +25,7 @@ export async function POST(req: Request) {
   const created = await prisma.item.create({
     data: {
       name: body.name,
-      type: body.type,
+      groupId: body.groupId || null,
       sif: body.sif || null,
       notes: body.notes || null,
       chilledHours: body.chilledHours,
@@ -25,6 +34,7 @@ export async function POST(req: Request) {
       hotHours: body.hotHours,
       thawingHours: body.thawingHours,
     },
+    include: { group: true },
   });
   return NextResponse.json(created);
 }

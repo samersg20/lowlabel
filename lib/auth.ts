@@ -19,7 +19,7 @@ export const authOptions: NextAuthOptions = {
         if (!user) return null;
         const valid = await compare(credentials.password, user.passwordHash);
         if (!valid) return null;
-        return { id: user.id, name: user.name, email: user.email, role: user.role } as any;
+        return { id: user.id, name: user.name, email: user.email, role: user.role, unit: user.unit } as any;
       },
     }),
   ],
@@ -29,6 +29,7 @@ export const authOptions: NextAuthOptions = {
       if (user) {
         token.id = user.id;
         token.role = (user as any).role;
+        token.unit = (user as any).unit;
       }
       return token;
     },
@@ -36,6 +37,7 @@ export const authOptions: NextAuthOptions = {
       if (session.user) {
         session.user.id = token.id as string;
         session.user.role = token.role as string;
+        session.user.unit = token.unit as string;
       }
       return session;
     },
