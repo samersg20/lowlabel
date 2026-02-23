@@ -62,3 +62,27 @@ Checklist rápido:
 - Métodos suportados: RESFRIADO, CONGELADO, AMBIENTE, QUENTE, DESCONGELANDO
 - Se método não tiver shelf life cadastrado, emissão falha com mensagem apropriada.
 - Quantidade limitada entre 1 e 50.
+
+
+## Teste offline da API de prints (sem npm registry)
+Com `node_modules` e Prisma já presentes localmente, você pode validar a API sem instalar nada novo.
+
+1. Suba a aplicação:
+   ```bash
+   cp .env.example .env
+   npx prisma migrate dev --name init
+   npm run dev
+   ```
+2. Faça login no navegador (`/login`).
+3. Capture o cookie de sessão do NextAuth:
+   - Abra DevTools > **Application** (ou **Storage**) > **Cookies** > `http://localhost:3000`.
+   - Copie o cookie `next-auth.session-token` (em HTTP local) ou `__Secure-next-auth.session-token` (HTTPS).
+   - Monte no formato `nome=valor`.
+4. Rode o script:
+   ```bash
+   NEXTAUTH_COOKIE='next-auth.session-token=SEU_VALOR' ./test-api.sh
+   ```
+
+O script valida automaticamente:
+- `quantity` inválida (`"abc"`, `0`, `""`) => espera **HTTP 400**.
+- `quantity` válida (`1`) => espera **HTTP 200**.
