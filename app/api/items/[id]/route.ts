@@ -10,6 +10,7 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
     where: { id: params.id },
     data: {
       name: body.name,
+      type: "GERAL",
       groupId: body.groupId || null,
       sif: body.sif || null,
       notes: body.notes || null,

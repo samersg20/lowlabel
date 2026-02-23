@@ -7,6 +7,7 @@ type Group = { id: string; name: string };
 export default function GroupsPage() {
   const [groups, setGroups] = useState<Group[]>([]);
   const [name, setName] = useState("");
+  const [editingId, setEditingId] = useState<string | null>(null);
 
   async function load() {
     const res = await fetch("/api/groups");
@@ -15,10 +16,15 @@ export default function GroupsPage() {
 
   useEffect(() => { load(); }, []);
 
-  async function create(e: React.FormEvent) {
+  async function submit(e: React.FormEvent) {
     e.preventDefault();
-    await fetch("/api/groups", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name }) });
+    await fetch(editingId ? `/api/groups/${editingId}` : "/api/groups", {
+      method: editingId ? "PUT" : "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name }),
+    });
     setName("");
+    setEditingId(null);
     load();
   }
 
@@ -27,13 +33,18 @@ export default function GroupsPage() {
     load();
   }
 
+  function startEdit(g: Group) {
+    setEditingId(g.id);
+    setName(g.name);
+  }
+
   return (
     <>
       <h1>Grupos</h1>
       <div className="card">
-        <form onSubmit={create} className="grid grid-2">
+        <form onSubmit={submit} className="grid grid-2">
           <label>Nome do grupo<input value={name} onChange={(e) => setName(e.target.value)} required /></label>
-          <button type="submit">Criar grupo</button>
+          <button type="submit">{editingId ? "Salvar grupo" : "Criar grupo"}</button>
         </form>
       </div>
       <div className="card">
@@ -41,7 +52,13 @@ export default function GroupsPage() {
           <thead><tr><th>Nome</th><th>Ações</th></tr></thead>
           <tbody>
             {groups.map((g) => (
-              <tr key={g.id}><td>{g.name}</td><td><button className="danger" onClick={() => remove(g.id)}>Excluir</button></td></tr>
+              <tr key={g.id}>
+                <td>{g.name}</td>
+                <td>
+                  <button className="secondary" onClick={() => startEdit(g)}>Editar</button>{" "}
+                  <button className="danger" onClick={() => remove(g.id)}>Excluir</button>
+                </td>
+              </tr>
             ))}
           </tbody>
         </table>

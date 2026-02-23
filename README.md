@@ -46,6 +46,11 @@ Checklist rápido:
 - Admin: `admin@safelabel.local` / `admin123`
 - Operador: `operador@safelabel.local` / `operador123`
 
+## Módulos
+- `/items`: cadastro e filtro de itens por grupo
+- `/groups`: cadastro/edição de grupos
+- `/users`: cadastro/edição de usuários com unidade BROOKLIN/PINHEIROS
+
 ## Fluxo de impressão
 1. Faça login
 2. Cadastre itens em `/items` com shelf life em dias por método

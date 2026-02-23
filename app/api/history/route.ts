@@ -12,11 +12,13 @@ export async function GET(req: Request) {
   const userId = searchParams.get("userId");
   const start = searchParams.get("start");
   const end = searchParams.get("end");
+  const unit = searchParams.get("unit");
 
   const where: any = {};
   if (itemId) where.itemId = itemId;
   if (storageMethod) where.storageMethod = storageMethod;
   if (userId) where.userId = userId;
+  if (unit && unit !== "TODAS") where.user = { unit };
   if (start || end) {
     where.createdAt = {};
     if (start) where.createdAt.gte = new Date(`${start}T00:00:00`);

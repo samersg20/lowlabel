@@ -25,6 +25,7 @@ export async function POST(req: Request) {
   const created = await prisma.item.create({
     data: {
       name: body.name,
+      type: "GERAL",
       groupId: body.groupId || null,
       sif: body.sif || null,
       notes: body.notes || null,

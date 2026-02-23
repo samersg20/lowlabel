@@ -11,14 +11,14 @@ type Row = {
   expiresAt: string;
   quantity: number;
   item: { id: string; name: string };
-  user: { id: string; name: string };
+  user: { id: string; name: string; unit?: string };
 };
 
 export default function HistoryPage() {
   const [rows, setRows] = useState<Row[]>([]);
   const [items, setItems] = useState<{ id: string; name: string }[]>([]);
   const [users, setUsers] = useState<{ id: string; name: string }[]>([]);
-  const [filters, setFilters] = useState({ itemId: "", storageMethod: "", userId: "", start: "", end: "" });
+  const [filters, setFilters] = useState({ itemId: "", storageMethod: "", userId: "", unit: "TODAS", start: "", end: "" });
 
   async function loadFilters() {
     const [itemsRes, historyRes] = await Promise.all([fetch("/api/items"), fetch("/api/history")]);
@@ -59,6 +59,11 @@ export default function HistoryPage() {
           <option value="">Todos usuários</option>
           {users.map((u) => <option key={u.id} value={u.id}>{u.name}</option>)}
         </select>
+        <select value={filters.unit} onChange={(e) => setFilters({ ...filters, unit: e.target.value })}>
+          <option value="TODAS">Todas filiais</option>
+          <option value="BROOKLIN">BROOKLIN</option>
+          <option value="PINHEIROS">PINHEIROS</option>
+        </select>
         <input type="date" value={filters.start} onChange={(e) => setFilters({ ...filters, start: e.target.value })} />
         <input type="date" value={filters.end} onChange={(e) => setFilters({ ...filters, end: e.target.value })} />
         <button onClick={apply}>Filtrar</button>
@@ -66,7 +71,7 @@ export default function HistoryPage() {
       <div className="card">
         <table className="table">
           <thead>
-            <tr><th>Item</th><th>Método</th><th>Produção</th><th>Validade</th><th>Qtd</th><th>Usuário</th><th>Status</th></tr>
+            <tr><th>Item</th><th>Método</th><th>Produção</th><th>Validade</th><th>Qtd</th><th>Usuário</th><th>Filial</th><th>Status</th></tr>
           </thead>
           <tbody>
             {rows.map((r) => {
@@ -79,6 +84,7 @@ export default function HistoryPage() {
                   <td>{formatDateTime(r.expiresAt)}</td>
                   <td>{r.quantity}</td>
                   <td>{r.user.name}</td>
+                  <td>{r.user.unit || "-"}</td>
                   <td className={expired ? "badge-expired" : "badge-ok"}>{expired ? "VENCIDO" : "OK"}</td>
                 </tr>
               );

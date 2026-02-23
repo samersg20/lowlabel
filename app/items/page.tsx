@@ -35,6 +35,7 @@ export default function ItemsPage() {
   const [groupFilter, setGroupFilter] = useState("");
   const [form, setForm] = useState<any>(empty);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [error, setError] = useState("");
 
   async function loadGroups() {
     const res = await fetch("/api/groups");
@@ -57,6 +58,7 @@ export default function ItemsPage() {
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
+    setError("");
     const payload = {
       ...form,
       groupId: form.groupId || null,
@@ -67,11 +69,17 @@ export default function ItemsPage() {
       thawingHours: form.thawingHours ? Number(form.thawingHours) : null,
     };
 
-    await fetch(`/api/items${editingId ? `/${editingId}` : ""}`, {
+    const res = await fetch(`/api/items${editingId ? `/${editingId}` : ""}`, {
       method: editingId ? "PUT" : "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
     });
+
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      setError(data.error || "Erro ao salvar item");
+      return;
+    }
 
     setForm(empty);
     setEditingId(null);
@@ -134,6 +142,7 @@ export default function ItemsPage() {
 
           <button type="submit">{editingId ? "Salvar" : "Criar"}</button>
         </form>
+        {error && <p style={{ color: "#b00020" }}>{error}</p>}
       </div>
 
       <div className="card">
