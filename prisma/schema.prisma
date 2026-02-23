@@ -21,6 +21,7 @@ model User {
   accounts      Account[]
   sessions      Session[]
   labelPrints   LabelPrint[]
+  printerConfigs PrinterConfig[]
   createdAt     DateTime     @default(now())
   updatedAt     DateTime     @updatedAt
 }
@@ -56,6 +57,22 @@ model ItemGroup {
   items     Item[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+
+model PrinterConfig {
+  id        String   @id @default(cuid())
+  name      String
+  unit      String
+  apiKey    String
+  printerId Int
+  isActive  Boolean  @default(true)
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([unit])
 }
 
 model LabelPrint {

@@ -14,6 +14,7 @@ export function Nav() {
       <Link href="/items">Itens</Link>
       <Link href="/groups">Grupos</Link>
       <Link href="/users">Usuários</Link>
+      <Link href="/printers">Impressoras</Link>
       <Link href="/history">Histórico</Link>
       <Link href="/print">Emitir</Link>
       <span style={{ marginLeft: "auto" }}>Olá, {data.user.name} ({data.user.unit})</span>

@@ -49,6 +49,7 @@ Checklist rápido:
 - `/items`: cadastro e filtro de itens por grupo
 - `/groups`: cadastro/edição de grupos
 - `/users`: cadastro/edição de usuários com unidade BROOKLIN/PINHEIROS
+- `/printers`: cadastro de impressoras por unidade (API key + printer id PrintNode)
 
 ## Fluxo de impressão
 1. Faça login
@@ -56,10 +57,12 @@ Checklist rápido:
 3. Vá para `/print`
 4. Selecione item + método + quantidade e clique **IMPRIMIR**
 5. Front chama `POST /api/prints`.
-6. Back registra rastreabilidade, gera ZPL e envia para PrintNode (`POST /printjobs`) de forma silenciosa.
+6. Back busca configuração da impressora pela unidade do usuário (cadastro em `/printers`); se não encontrar ativa, usa variáveis de ambiente.
+7. Back registra rastreabilidade, gera ZPL e envia para PrintNode (`POST /printjobs`) de forma silenciosa.
 
 ## Configuração PrintNode
-- Defina no ambiente:
+- Você pode cadastrar as credenciais por unidade em `/printers` (recomendado).
+- Fallback por ambiente (quando não houver cadastro ativo da unidade):
   - `PRINTNODE_API_KEY`
   - `PRINTNODE_PRINTER_ID` (ou `PRINTNODE_PRINT_ID`)
 - O backend usa autenticação Basic (`apiKey:`) e envia conteúdo `raw_base64` para o endpoint oficial do PrintNode.

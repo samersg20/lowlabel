@@ -63,6 +63,8 @@ export async function POST(req: Request) {
       },
     });
 
+    const printerConfig = await prisma.printerConfig.findFirst({ where: { unit: session.user.unit, isActive: true } });
+
     const zpl = makeZplLabel({
       name: item.name,
       storageMethod,
@@ -72,7 +74,12 @@ export async function POST(req: Request) {
       sif: item.sif,
     });
 
-    const jobIds = await submitRawZplToPrintNode(zpl, quantity, `Etiqueta ${item.name} - ${storageMethod}`);
+    const jobIds = await submitRawZplToPrintNode(
+      zpl,
+      quantity,
+      `Etiqueta ${item.name} - ${storageMethod}`,
+      printerConfig ? { apiKey: printerConfig.apiKey, printerId: printerConfig.printerId } : undefined,
+    );
 
     return NextResponse.json({
       print,
@@ -82,6 +89,8 @@ export async function POST(req: Request) {
       expiresAt,
       storageMethod,
       jobIds,
+      printerUnit: session.user.unit,
+      printerSource: printerConfig ? "cadastro" : "env",
     });
   } catch (error: any) {
     return NextResponse.json({ error: error?.message || "Falha ao emitir etiqueta" }, { status: 500 });

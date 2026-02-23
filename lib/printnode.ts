@@ -1,14 +1,18 @@
 const PRINTNODE_API_BASE = "https://api.printnode.com";
 
-function getPrintNodeConfig() {
-  const apiKey = process.env.PRINTNODE_API_KEY;
-  const printerIdRaw = process.env.PRINTNODE_PRINTER_ID ?? process.env.PRINTNODE_PRINT_ID;
+type PrintNodeConfig = {
+  apiKey: string;
+  printerId: number;
+};
+
+function normalizeConfig(input: { apiKey?: string | null; printerId?: number | string | null }) {
+  const apiKey = String(input.apiKey ?? "").trim();
+  const printerId = Number(input.printerId);
 
   if (!apiKey) {
     throw new Error("PRINTNODE_API_KEY não configurada");
   }
 
-  const printerId = Number(printerIdRaw);
   if (!Number.isInteger(printerId) || printerId <= 0) {
     throw new Error("PRINTNODE_PRINTER_ID/PRINTNODE_PRINT_ID inválido");
   }
@@ -16,12 +20,25 @@ function getPrintNodeConfig() {
   return { apiKey, printerId };
 }
 
+function getPrintNodeConfigFromEnv(): PrintNodeConfig {
+  return normalizeConfig({
+    apiKey: process.env.PRINTNODE_API_KEY,
+    printerId: process.env.PRINTNODE_PRINTER_ID ?? process.env.PRINTNODE_PRINT_ID,
+  });
+}
+
 function makeBasicAuth(apiKey: string) {
   return `Basic ${Buffer.from(`${apiKey}:`).toString("base64")}`;
 }
 
-export async function submitRawZplToPrintNode(zpl: string, quantity: number, title: string) {
-  const { apiKey, printerId } = getPrintNodeConfig();
+export async function submitRawZplToPrintNode(
+  zpl: string,
+  quantity: number,
+  title: string,
+  configOverride?: { apiKey?: string | null; printerId?: number | string | null },
+) {
+  const { apiKey, printerId } = configOverride ? normalizeConfig(configOverride) : getPrintNodeConfigFromEnv();
+
   const content = Buffer.from(zpl, "utf8").toString("base64");
   const authHeader = makeBasicAuth(apiKey);
   const jobIds: number[] = [];
