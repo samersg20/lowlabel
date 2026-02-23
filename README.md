@@ -4,7 +4,7 @@ MVP web para etiquetas de segurança alimentar com impressão automática em Zeb
 
 ## Stack
 - Next.js 14 (App Router + TypeScript)
-- Prisma + SQLite
+- Prisma + PostgreSQL (Prisma Postgres no Vercel)
 - Auth.js (NextAuth) com Credentials
 - QZ Tray no front-end para impressão RAW ZPL
 
@@ -21,6 +21,8 @@ cp .env.example .env
 npx prisma migrate dev --name init
 npm run dev
 ```
+
+> Para build local sem executar seed, use: `SKIP_DB_SEED=1 npm run build`.
 
 Acesse: `http://localhost:3000`
 
