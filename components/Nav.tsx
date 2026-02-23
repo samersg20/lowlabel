@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { signOut, useSession } from "next-auth/react";
+import { LowLogo } from "@/components/LowLogo";
 
 export function Nav() {
   const { data } = useSession();
@@ -9,7 +10,7 @@ export function Nav() {
 
   return (
     <div className="nav card">
-      <img src="/lowbbq-logo.svg" alt="Low BBQ" width={86} height={38} style={{ marginRight: 8 }} />
+      <div style={{ marginRight: 8 }}><LowLogo width={92} compact /></div>
       <Link href="/items">Itens</Link>
       <Link href="/groups">Grupos</Link>
       <Link href="/users">Usuários</Link>

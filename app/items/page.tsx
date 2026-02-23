@@ -10,7 +10,6 @@ type Item = {
   groupId?: string | null;
   group?: Group | null;
   sif?: string | null;
-  notes?: string | null;
   methodQuente?: boolean;
   methodPistaFria?: boolean;
   methodDescongelando?: boolean;
@@ -23,7 +22,6 @@ const empty = {
   name: "",
   groupId: "",
   sif: "",
-  notes: "",
   methodQuente: false,
   methodPistaFria: false,
   methodDescongelando: false,
@@ -74,6 +72,7 @@ export default function ItemsPage() {
     const payload = {
       ...form,
       groupId: form.groupId || null,
+      notes: null,
     };
 
     const res = await fetch(`/api/items${editingId ? `/${editingId}` : ""}`, {
@@ -105,6 +104,7 @@ export default function ItemsPage() {
       ...item,
       groupId: item.groupId ?? "",
     });
+    window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   function enabledMethods(item: Item) {
@@ -112,9 +112,53 @@ export default function ItemsPage() {
     return active.length ? active.join(", ") : "-";
   }
 
+  function toggleMethod(method: string) {
+    const field = methodFieldByLabel[method];
+    setForm({ ...form, [field]: !form[field] });
+  }
+
   return (
     <>
       <h1>Itens</h1>
+
+      <div className="card">
+        <form className="grid grid-3" onSubmit={submit}>
+          <label>Item<input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required /></label>
+          <label>Grupo
+            <select value={form.groupId} onChange={(e) => setForm({ ...form, groupId: e.target.value })} required>
+              <option value="">Selecione...</option>
+              {groups.map((g) => (
+                <option key={g.id} value={g.id}>{g.name}</option>
+              ))}
+            </select>
+          </label>
+          <label>SIF<input placeholder="SIF (opcional)" value={form.sif} onChange={(e) => setForm({ ...form, sif: e.target.value })} /></label>
+
+          <div style={{ gridColumn: "1 / -1" }}>
+            <p className="section-label">Métodos aplicáveis</p>
+            <div className="method-grid">
+              {STORAGE_METHODS.map((method) => {
+                const field = methodFieldByLabel[method];
+                const selected = Boolean(form[field]);
+                return (
+                  <button
+                    key={method}
+                    type="button"
+                    className={`method-pill ${selected ? "selected" : ""}`}
+                    onClick={() => toggleMethod(method)}
+                  >
+                    {method}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <button type="submit">{editingId ? "Salvar" : "Criar"}</button>
+        </form>
+        {error && <p style={{ color: "#b00020" }}>{error}</p>}
+      </div>
+
       <div className="card">
         <div style={{ marginBottom: 12 }}>
           <label>
@@ -128,61 +172,26 @@ export default function ItemsPage() {
           </label>
         </div>
 
-        <form className="grid grid-3" onSubmit={submit}>
-          <label>Item<input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required /></label>
-          <label>Grupo
-            <select value={form.groupId} onChange={(e) => setForm({ ...form, groupId: e.target.value })} required>
-              <option value="">Selecione...</option>
-              {groups.map((g) => (
-                <option key={g.id} value={g.id}>{g.name}</option>
+        <div className="table-wrap">
+          <table className="table">
+            <thead>
+              <tr><th>Nome</th><th>Grupo</th><th>Métodos</th><th>Ações</th></tr>
+            </thead>
+            <tbody>
+              {items.map((item) => (
+                <tr key={item.id}>
+                  <td>{item.name}</td>
+                  <td>{item.group?.name || "-"}</td>
+                  <td>{enabledMethods(item)}</td>
+                  <td>
+                    <button className="secondary" onClick={() => startEdit(item)}>Editar</button>{" "}
+                    <button className="danger" onClick={() => remove(item.id)}>Excluir</button>
+                  </td>
+                </tr>
               ))}
-            </select>
-          </label>
-          <label>SIF<input placeholder="SIF (opcional)" value={form.sif} onChange={(e) => setForm({ ...form, sif: e.target.value })} /></label>
-
-          <label style={{ gridColumn: "1 / -1" }}>Métodos aplicáveis</label>
-          <div style={{ gridColumn: "1 / -1", display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 8 }}>
-            {STORAGE_METHODS.map((method) => {
-              const field = methodFieldByLabel[method];
-              return (
-                <label key={method} style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                  <input
-                    type="checkbox"
-                    checked={Boolean(form[field])}
-                    onChange={(e) => setForm({ ...form, [field]: e.target.checked })}
-                  />
-                  {method}
-                </label>
-              );
-            })}
-          </div>
-
-          <label style={{ gridColumn: "1 / -1" }}>Observações<textarea placeholder="Observações" value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} /></label>
-
-          <button type="submit">{editingId ? "Salvar" : "Criar"}</button>
-        </form>
-        {error && <p style={{ color: "#b00020" }}>{error}</p>}
-      </div>
-
-      <div className="card">
-        <table className="table">
-          <thead>
-            <tr><th>Nome</th><th>Grupo</th><th>Métodos</th><th>Ações</th></tr>
-          </thead>
-          <tbody>
-            {items.map((item) => (
-              <tr key={item.id}>
-                <td>{item.name}</td>
-                <td>{item.group?.name || "-"}</td>
-                <td>{enabledMethods(item)}</td>
-                <td>
-                  <button className="secondary" onClick={() => startEdit(item)}>Editar</button>{" "}
-                  <button className="danger" onClick={() => remove(item.id)}>Excluir</button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+            </tbody>
+          </table>
+        </div>
       </div>
     </>
   );

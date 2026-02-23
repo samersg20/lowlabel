@@ -68,7 +68,6 @@ export async function POST(req: Request) {
     expiresAt,
     userName: session.user.name,
     sif: item.sif,
-    notes: item.notes,
   });
 
   return NextResponse.json({
