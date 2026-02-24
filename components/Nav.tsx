@@ -39,6 +39,7 @@ export function Nav() {
       )}
 
       <Link href="/print" className="nav-emit">Emitir</Link>
+      <Link href="/print-easy" className="secondary">Emitir fácil</Link>
 
       <span style={{ marginLeft: "auto" }}>Olá, {data.user.name} ({data.user.unit})</span>
       <button className="secondary" onClick={() => signOut({ callbackUrl: "/login" })}>Sair</button>

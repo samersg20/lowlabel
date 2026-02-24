@@ -68,6 +68,14 @@ Checklist rápido:
 - Itens antigos **não são removidos automaticamente**; exclusão continua manual.
 - Cada item possui `itemCode` de 6 dígitos gerado automaticamente pelo sistema (uso interno); não é necessário preencher na planilha.
 
+
+## Emitir fácil (IA com Gemini)
+- Acesse `/print-easy` para digitar pedidos em texto corrido (ex.: `10 brisket 5 cupim 2 pork ribs`).
+- O sistema envia o texto para a API Gemini, interpreta item/quantidade e dispara impressão automaticamente.
+- Configure no ambiente:
+  - `GEMINI_API_KEY`
+  - `GEMINI_MODEL` (opcional, padrão `gemini-1.5-flash`)
+
 ## Fluxo de impressão
 1. Faça login
 2. Cadastre itens em `/items` e marque os métodos válidos para cada produto

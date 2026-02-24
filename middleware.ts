@@ -14,10 +14,11 @@ export default withAuth(
 
     const isHomePage = pathname === "/";
     const isPrintPage = pathname === "/print";
+    const isPrintEasyPage = pathname === "/print-easy";
     const isPrintApi = pathname.startsWith("/api/prints");
     const isItemsReadApi = pathname.startsWith("/api/items") && req.method === "GET";
 
-    if (isHomePage || isPrintPage || isPrintApi || isItemsReadApi) {
+    if (isHomePage || isPrintPage || isPrintEasyPage || isPrintApi || isItemsReadApi) {
       return NextResponse.next();
     }
 
