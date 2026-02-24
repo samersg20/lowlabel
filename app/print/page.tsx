@@ -113,7 +113,7 @@ export default function PrintPage() {
         </label>
 
         <div>
-          <label>Quantidade (1-20)</label>
+          <label>Quantidade</label>
           <div className="qty-control">
             <button type="button" className="qty-btn" onClick={() => changeQuantity(1)}>+</button>
             <div className="qty-value">{quantity}</div>

@@ -191,6 +191,7 @@ export default function ItemsPage() {
       </div>
 
       <div className="card">
+        <h2 style={{ marginTop: 0 }}>Cadastrar</h2>
         <form className="grid grid-3" onSubmit={submit}>
           <label>Item<input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required /></label>
           <label>Grupo

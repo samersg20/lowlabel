@@ -63,7 +63,7 @@ export default function PrintEasyPage() {
     <>
       <h1>Digitar</h1>
       <div className="card grid">
-        <p style={{ margin: 0, fontWeight: 700 }}>Peça em texto corrido. Vamos organizar em linhas (QTD / ITEM / MÉTODO).</p>
+        <p style={{ margin: 0, fontWeight: 700 }}>Escreva seu pedido. Vamos organizar em linhas (QTD / ITEM / MÉTODO).</p>
         <p style={{ margin: 0, color: "#5b6774", fontSize: 13 }}>Máximo 10 etiquetas por requisição. Se estiver de acordo com a sugestão clique imprimir.</p>
         <textarea
           rows={6}
