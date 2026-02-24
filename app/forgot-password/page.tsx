@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { FormEvent, useState } from "react";
 
 export default function ForgotPasswordPage() {
@@ -31,6 +32,7 @@ export default function ForgotPasswordPage() {
       <form className="grid" onSubmit={onSubmit}>
         <label>E-mail<input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required /></label>
         <button type="submit">Enviar link</button>
+        <Link href="/login" className="secondary" style={{ display: "inline-block", textAlign: "center" }}>Voltar</Link>
       </form>
       {message && <p>{message}</p>}
     </div>

@@ -53,6 +53,7 @@ Checklist rápido:
 - Para envio real de e-mail configure:
   - `RESEND_API_KEY`
   - `RESEND_FROM_EMAIL`
+- **Segurança:** não versionar chave no repositório; configure no ambiente (`.env` local e variáveis no deploy).
 
 ## Módulos
 - `/items`: cadastro e filtro de itens por grupo
