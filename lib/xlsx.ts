@@ -281,6 +281,7 @@ export function parseItemsWorkbook(data: Buffer): XlsxRow[] {
         value = v ? v[1] : "";
       }
 
+
       value = value.replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").trim();
       cellMap.set(index, value);
     }
