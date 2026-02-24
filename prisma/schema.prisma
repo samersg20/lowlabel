@@ -13,6 +13,7 @@ model User {
   id            String       @id @default(cuid())
   name          String
   email         String       @unique
+  username      String?      @unique
   emailVerified DateTime?
   image         String?
   passwordHash  String
@@ -22,6 +23,7 @@ model User {
   sessions      Session[]
   labelPrints   LabelPrint[]
   printerConfigs PrinterConfig[]
+  passwordResetTokens PasswordResetToken[]
   createdAt     DateTime     @default(now())
   updatedAt     DateTime     @updatedAt
 }
@@ -73,6 +75,19 @@ model PrinterConfig {
   updatedAt DateTime @updatedAt
 
   @@unique([unit])
+}
+
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([expiresAt])
 }
 
 model LabelPrint {

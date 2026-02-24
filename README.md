@@ -42,8 +42,17 @@ Checklist rápido:
 > Neste ambiente de execução, o 403 ocorreu mesmo com registry público e sem `.npmrc`, indicando bloqueio/política externa do ambiente.
 
 ## Usuários seed
-- Admin: `admin@safelabel.local` / `admin123`
-- Operador: `operador@safelabel.local` / `operador123`
+- Admin: `admin` (ou `admin@safelabel.local`) / `admin123`
+- Operador: `operador` (ou `operador@safelabel.local`) / `operador123`
+
+
+## Recuperação de senha
+- Link **Esqueci minha senha** em `/login`
+- Endpoint público: `POST /api/password/forgot` (envia link por e-mail)
+- Endpoint público: `POST /api/password/reset` (troca senha por token)
+- Para envio real de e-mail configure:
+  - `RESEND_API_KEY`
+  - `RESEND_FROM_EMAIL`
 
 ## Módulos
 - `/items`: cadastro e filtro de itens por grupo

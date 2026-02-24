@@ -2,12 +2,12 @@
 
 import { useEffect, useState } from "react";
 
-type User = { id: string; name: string; email: string; role: string; unit: string };
+type User = { id: string; name: string; username?: string | null; email: string; role: string; unit: string };
 
 export default function UsersPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [form, setForm] = useState({ name: "", email: "", password: "", role: "OPERATOR", unit: "BROOKLIN" });
+  const [form, setForm] = useState({ name: "", username: "", email: "", password: "", role: "OPERATOR", unit: "BROOKLIN" });
 
   async function load() {
     const res = await fetch("/api/users");
@@ -21,10 +21,10 @@ export default function UsersPage() {
     await fetch(editingId ? `/api/users/${editingId}` : "/api/users", {
       method: editingId ? "PUT" : "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(form),
+      body: JSON.stringify({ ...form, username: form.username.trim() || null }),
     });
     setEditingId(null);
-    setForm({ name: "", email: "", password: "", role: "OPERATOR", unit: "BROOKLIN" });
+    setForm({ name: "", username: "", email: "", password: "", role: "OPERATOR", unit: "BROOKLIN" });
     load();
   }
 
@@ -35,7 +35,7 @@ export default function UsersPage() {
 
   function startEdit(u: User) {
     setEditingId(u.id);
-    setForm({ name: u.name, email: u.email, password: "", role: u.role, unit: u.unit });
+    setForm({ name: u.name, username: u.username || "", email: u.email, password: "", role: u.role, unit: u.unit });
   }
 
   return (
@@ -44,6 +44,7 @@ export default function UsersPage() {
       <div className="card">
         <form onSubmit={submit} className="grid grid-3">
           <label>Nome<input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required /></label>
+          <label>Usuário (login)<input value={form.username} onChange={(e) => setForm({ ...form, username: e.target.value })} placeholder="Ex.: joao.silva" /></label>
           <label>E-mail<input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} required /></label>
           <label>Senha<input type="password" placeholder={editingId ? "Deixe vazio para manter" : "Senha"} value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} required={!editingId} /></label>
           <label>Perfil<select value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value })}><option value="OPERATOR">OPERADOR</option><option value="ADMIN">ADMIN</option></select></label>
@@ -53,8 +54,8 @@ export default function UsersPage() {
       </div>
       <div className="card table-wrap">
         <table className="table">
-          <thead><tr><th>Nome</th><th>Email</th><th>Perfil</th><th>Unidade</th><th>Ações</th></tr></thead>
-          <tbody>{users.map((u) => <tr key={u.id}><td>{u.name}</td><td>{u.email}</td><td>{u.role}</td><td>{u.unit}</td><td><button className="secondary" onClick={() => startEdit(u)}>Editar</button>{" "}<button className="danger" onClick={() => remove(u.id)}>Excluir</button></td></tr>)}</tbody>
+          <thead><tr><th>Nome</th><th>Usuário</th><th>Email</th><th>Perfil</th><th>Unidade</th><th>Ações</th></tr></thead>
+          <tbody>{users.map((u) => <tr key={u.id}><td>{u.name}</td><td>{u.username || "-"}</td><td>{u.email}</td><td>{u.role}</td><td>{u.unit}</td><td><button className="secondary" onClick={() => startEdit(u)}>Editar</button>{" "}<button className="danger" onClick={() => remove(u.id)}>Excluir</button></td></tr>)}</tbody>
         </table>
       </div>
     </>

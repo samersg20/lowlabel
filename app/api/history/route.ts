@@ -1,4 +1,5 @@
 import { auth } from "@/lib/auth";
+import { getSaoPauloDayRange } from "@/lib/date";
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 
@@ -22,8 +23,8 @@ export async function GET(req: Request) {
   if (unit && unit !== "TODAS") where.user = { unit };
   if (start || end) {
     where.createdAt = {};
-    if (start) where.createdAt.gte = new Date(`${start}T00:00:00`);
-    if (end) where.createdAt.lte = new Date(`${end}T23:59:59`);
+    if (start) where.createdAt.gte = getSaoPauloDayRange(start).start;
+    if (end) where.createdAt.lte = getSaoPauloDayRange(end).end;
   }
 
   const records = await prisma.labelPrint.findMany({

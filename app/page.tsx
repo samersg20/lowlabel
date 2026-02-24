@@ -1,14 +1,6 @@
 import { auth } from "@/lib/auth";
+import { addDaysToDateKey, getSaoPauloDayRange, nowInSaoPauloDateKey } from "@/lib/date";
 import { prisma } from "@/lib/prisma";
-
-function todayRange() {
-  const now = new Date();
-  const start = new Date(now);
-  start.setHours(0, 0, 0, 0);
-  const end = new Date(now);
-  end.setHours(23, 59, 59, 999);
-  return { start, end };
-}
 
 export default async function Home() {
   const session = await auth();
@@ -22,20 +14,27 @@ export default async function Home() {
     );
   }
 
-  const { start, end } = todayRange();
+  const todayKey = nowInSaoPauloDateKey();
+  const tomorrowKey = addDaysToDateKey(todayKey, 1);
 
-  const [totalHoje, totalHojeUnidade] = await Promise.all([
+  const todayRange = getSaoPauloDayRange(todayKey);
+  const tomorrowRange = getSaoPauloDayRange(tomorrowKey);
+
+  const [
+    totalHoje,
+    totalHojeUnidade,
+    vencendoHoje,
+    vencendoAmanha,
+  ] = await Promise.all([
+    prisma.labelPrint.count({ where: { createdAt: { gte: todayRange.start, lte: todayRange.end } } }),
     prisma.labelPrint.count({
       where: {
-        createdAt: { gte: start, lte: end },
-      },
-    }),
-    prisma.labelPrint.count({
-      where: {
-        createdAt: { gte: start, lte: end },
+        createdAt: { gte: todayRange.start, lte: todayRange.end },
         user: { unit: session.user.unit },
       },
     }),
+    prisma.labelPrint.count({ where: { expiresAt: { gte: todayRange.start, lte: todayRange.end } } }),
+    prisma.labelPrint.count({ where: { expiresAt: { gte: tomorrowRange.start, lte: tomorrowRange.end } } }),
   ]);
 
   return (
@@ -49,6 +48,16 @@ export default async function Home() {
         <div>
           <h2 style={{ marginTop: 0 }}>Etiquetas emitidas hoje ({session.user.unit})</h2>
           <p style={{ fontSize: 40, fontWeight: 700, margin: "8px 0" }}>{totalHojeUnidade}</p>
+        </div>
+      </div>
+      <div className="card grid grid-2">
+        <div>
+          <h2 style={{ marginTop: 0 }}>Etiquetas vencendo hoje</h2>
+          <p style={{ fontSize: 40, fontWeight: 700, margin: "8px 0" }}>{vencendoHoje}</p>
+        </div>
+        <div>
+          <h2 style={{ marginTop: 0 }}>Etiquetas vencendo amanhã</h2>
+          <p style={{ fontSize: 40, fontWeight: 700, margin: "8px 0" }}>{vencendoAmanha}</p>
         </div>
       </div>
     </>
