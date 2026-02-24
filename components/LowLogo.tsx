@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 
-const REQUESTED_LOGO_SRC = "/img/Low-Artboard%204%E2%80%93Alta.png";
+const REQUESTED_LOGO_SRC = "/img/Lowlogo.png";
 const FALLBACK_LOGO_SRC = "/lowbbq-logo.svg";
 
 export function LowLogo({ width = 220, compact = false }: { width?: number; compact?: boolean }) {
