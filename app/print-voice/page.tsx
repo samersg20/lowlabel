@@ -129,14 +129,15 @@ export default function PrintVoicePage() {
       <h1>Falar</h1>
       <div className="card grid">
         <label>
-          Fale seu pedido. A IA vai organizar em linhas (qtd item método).
+          Fale seu pedido. Vamos organizar em linhas (quantidade / item / método)
           <textarea
             rows={6}
-            placeholder="Ex.: 10 brisket 5 cupim 2 pork ribs"
+            placeholder="Ex.: 2 brisket 3 cupim 2 pork ribs"
             value={input}
             onChange={(e) => setInput(e.target.value)}
           />
-        </label>
+        <small style={{ color: "#5b6774", fontWeight: 500, marginTop: 4 }}>Máximo 10 etiquetas por requisição. Se estiver de acordo com a sugestão clique imprimir.</small>
+          </label>
 
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
           <button type="button" onClick={startVoiceCapture} disabled={!canRecord || listening || loading}>

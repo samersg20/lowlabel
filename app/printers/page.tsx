@@ -21,6 +21,7 @@ const emptyForm = {
 
 export default function PrintersPage() {
   const [rows, setRows] = useState<Printer[]>([]);
+  const [units, setUnits] = useState<string[]>(["BROOKLIN", "PINHEIROS"]);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<any>(emptyForm);
   const [error, setError] = useState("");
@@ -29,6 +30,11 @@ export default function PrintersPage() {
     const res = await fetch("/api/printers");
     const data = await res.json();
     setRows(Array.isArray(data) ? data : []);
+    const unitsRes = await fetch("/api/units");
+    const unitsData = await unitsRes.json().catch(() => []);
+    if (Array.isArray(unitsData) && unitsData.length) {
+      setUnits(unitsData.map((u: any) => u.name));
+    }
   }
 
   useEffect(() => {
@@ -92,8 +98,7 @@ export default function PrintersPage() {
           <label>
             Unidade
             <select value={form.unit} onChange={(e) => setForm({ ...form, unit: e.target.value })}>
-              <option value="BROOKLIN">BROOKLIN</option>
-              <option value="PINHEIROS">PINHEIROS</option>
+              {units.map((u) => <option key={u} value={u}>{u}</option>)}
             </select>
           </label>
           <label>

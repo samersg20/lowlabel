@@ -6,26 +6,26 @@ const HEADERS = [
   "name",
   "group",
   "sif",
+  "preferredStorageMethod",
   "methodQuente",
   "methodPistaFria",
   "methodDescongelando",
   "methodResfriado",
   "methodCongelado",
   "methodAmbienteSecos",
-  "preferredStorageMethod",
 ] as const;
 
 const DISPLAY_HEADERS = [
   "Item",
   "Grupo",
   "Sif",
+  "Método Principal",
   "Quente (1)",
   "Pista Fria (2)",
   "Descongelando (3)",
   "Resfriado (4)",
   "Congelado (5)",
   "Ambiente Secos (6)",
-  "Método Principal",
 ] as const;
 
 const LEGACY_HEADERS = ["itemCode", ...HEADERS] as const;

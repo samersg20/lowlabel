@@ -87,7 +87,7 @@ export default function PrintPage() {
 
   return (
     <>
-      <h1>Emitir Etiqueta</h1>
+      <h1>Escolher Etiqueta</h1>
       <div className="card grid grid-2">
         <label>
           Item

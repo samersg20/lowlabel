@@ -6,12 +6,18 @@ type User = { id: string; name: string; username?: string | null; email: string;
 
 export default function UsersPage() {
   const [users, setUsers] = useState<User[]>([]);
+  const [units, setUnits] = useState<string[]>(["BROOKLIN", "PINHEIROS"]);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState({ name: "", username: "", email: "", password: "", role: "OPERATOR", unit: "BROOKLIN" });
 
   async function load() {
     const res = await fetch("/api/users");
     setUsers(await res.json());
+    const unitsRes = await fetch("/api/units");
+    const unitsData = await unitsRes.json().catch(() => []);
+    if (Array.isArray(unitsData) && unitsData.length) {
+      setUnits(unitsData.map((u: any) => u.name));
+    }
   }
 
   useEffect(() => { load(); }, []);
@@ -48,7 +54,7 @@ export default function UsersPage() {
           <label>E-mail<input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} required /></label>
           <label>Senha<input type="password" placeholder={editingId ? "Deixe vazio para manter" : "Senha"} value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} required={!editingId} /></label>
           <label>Perfil<select value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value })}><option value="OPERATOR">OPERADOR</option><option value="ADMIN">ADMIN</option></select></label>
-          <label>Unidade<select value={form.unit} onChange={(e) => setForm({ ...form, unit: e.target.value })}><option value="BROOKLIN">BROOKLIN</option><option value="PINHEIROS">PINHEIROS</option></select></label>
+          <label>Unidade<select value={form.unit} onChange={(e) => setForm({ ...form, unit: e.target.value })}>{units.map((u) => <option key={u} value={u}>{u}</option>)}</select></label>
           <button type="submit">{editingId ? "Salvar usuário" : "Criar usuário"}</button>
         </form>
       </div>

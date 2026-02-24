@@ -13,6 +13,21 @@ async function upsertUser(name: string, username: string, email: string, passwor
 }
 
 async function main() {
+  await prisma.unit.upsert({ where: { name: "BROOKLIN" }, update: {}, create: { name: "BROOKLIN", email: "brooklin@low.local", phone: "", managerName: "" } });
+  await prisma.unit.upsert({ where: { name: "PINHEIROS" }, update: {}, create: { name: "PINHEIROS", email: "pinheiros@low.local", phone: "", managerName: "" } });
+
+  const methods = [
+    { name: "QUENTE", durationValue: 3, durationUnit: "hours" },
+    { name: "PISTA FRIA", durationValue: 3, durationUnit: "hours" },
+    { name: "DESCONGELANDO", durationValue: 3, durationUnit: "days" },
+    { name: "RESFRIADO", durationValue: 3, durationUnit: "days" },
+    { name: "CONGELADO", durationValue: 30, durationUnit: "days" },
+    { name: "AMBIENTE SECOS", durationValue: 30, durationUnit: "days" },
+  ];
+  for (const method of methods) {
+    await prisma.method.upsert({ where: { name: method.name }, update: method, create: method });
+  }
+
   await prisma.itemGroup.upsert({ where: { name: "Carnes" }, update: {}, create: { name: "Carnes" } });
   await prisma.itemGroup.upsert({ where: { name: "Molhos" }, update: {}, create: { name: "Molhos" } });
 

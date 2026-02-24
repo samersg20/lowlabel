@@ -11,20 +11,12 @@ function parseFlag(value: string) {
   throw new Error("Valor de método inválido");
 }
 
-function parsePreferredMethod(value: string, sheetLine: number) {
+function parsePreferredMethod(value: string, sheetLine: number, methodsById: Map<string, string>) {
   const normalized = String(value || "").trim();
   if (!normalized) return null;
-  const byCode: Record<string, string> = {
-    "1": "QUENTE",
-    "2": "PISTA FRIA",
-    "3": "DESCONGELANDO",
-    "4": "RESFRIADO",
-    "5": "CONGELADO",
-    "6": "AMBIENTE SECOS",
-  };
-  const method = byCode[normalized];
+  const method = methodsById.get(normalized);
   if (!method) {
-    throw new Error(`Linha ${sheetLine}: Método Principal inválido (${normalized}). Use número de 1 a 6`);
+    throw new Error(`Linha ${sheetLine}: Método Principal inválido (${normalized}). Use o número do módulo Métodos`);
   }
   return method;
 }
@@ -68,6 +60,8 @@ export async function POST(req: Request) {
 
     const groups = await prisma.itemGroup.findMany();
     const groupByName = new Map(groups.map((g) => [g.name.trim().toLowerCase(), g]));
+    const methods = await prisma.method.findMany({ orderBy: { id: "asc" } });
+    const methodsById = new Map(methods.map((m) => [String(m.id), m.name]));
 
     let created = 0;
     let updated = 0;
@@ -90,7 +84,7 @@ export async function POST(req: Request) {
         methodResfriado: parseFlag(row.methodResfriado),
         methodCongelado: parseFlag(row.methodCongelado),
         methodAmbienteSecos: parseFlag(row.methodAmbienteSecos),
-        preferredStorageMethod: parsePreferredMethod(row.preferredStorageMethod, sheetLine),
+        preferredStorageMethod: parsePreferredMethod(row.preferredStorageMethod, sheetLine, methodsById),
       };
 
       const preferredEnabledMap: Record<string, boolean> = {

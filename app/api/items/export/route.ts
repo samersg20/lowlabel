@@ -3,19 +3,13 @@ import { prisma } from "@/lib/prisma";
 import { buildItemsWorkbook } from "@/lib/xlsx";
 import { NextResponse } from "next/server";
 
-const methodCode: Record<string, string> = {
-  QUENTE: "1",
-  "PISTA FRIA": "2",
-  DESCONGELANDO: "3",
-  RESFRIADO: "4",
-  CONGELADO: "5",
-  "AMBIENTE SECOS": "6",
-};
-
 export async function GET() {
   const session = await auth();
   if (!session?.user) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   if (session.user.role !== "ADMIN") return NextResponse.json({ error: "forbidden" }, { status: 403 });
+
+  const methods = await prisma.method.findMany({ orderBy: { id: "asc" } });
+  const methodCode = new Map(methods.map((m) => [m.name, String(m.id)]));
 
   const items = await prisma.item.findMany({ include: { group: true }, orderBy: { name: "asc" } });
   const rows = items.map((item) => ({
@@ -28,7 +22,7 @@ export async function GET() {
     methodResfriado: item.methodResfriado ? "S" : "N",
     methodCongelado: item.methodCongelado ? "S" : "N",
     methodAmbienteSecos: item.methodAmbienteSecos ? "S" : "N",
-    preferredStorageMethod: item.preferredStorageMethod ? methodCode[item.preferredStorageMethod] || "" : "",
+    preferredStorageMethod: item.preferredStorageMethod ? methodCode.get(item.preferredStorageMethod) || "" : "",
   }));
 
   const buffer = buildItemsWorkbook(rows);

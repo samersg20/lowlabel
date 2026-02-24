@@ -169,6 +169,11 @@ export async function parseAiPrintOrder({
     parsedResults.push({ item, quantity, storageMethod });
   }
 
+  const totalQuantity = parsedResults.reduce((sum, row) => sum + row.quantity, 0);
+  if (totalQuantity > maxQuantity) {
+    throw new Error(`Máximo ${maxQuantity} etiquetas por requisição`);
+  }
+
   if (!parsedResults.length) {
     throw new Error("Nenhum item válido encontrado para impressão");
   }

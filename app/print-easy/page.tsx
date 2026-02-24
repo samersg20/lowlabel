@@ -8,7 +8,27 @@ export default function PrintEasyPage() {
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
 
-  async function onSubmit() {
+  async function onInterpret() {
+    setLoading(true);
+    setError("");
+    setMessage("");
+    try {
+      const res = await fetch("/api/prints/easy/parse", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ input }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || "Falha ao interpretar");
+      setInput(String(data.parsedText || input));
+    } catch (e: any) {
+      setError(e.message || "Erro no Digitar");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function onPrint() {
     setLoading(true);
     setError("");
     setMessage("");
@@ -44,18 +64,22 @@ export default function PrintEasyPage() {
       <h1>Digitar</h1>
       <div className="card grid">
         <label>
-          Pedido em texto corrido (máximo de 10 etiquetas por item)
+          Peça em texto corrido. Vamos organizar em linhas (QTD / ITEM / MÉTODO)
+          <small style={{ color: "#5b6774", fontWeight: 500, marginTop: 4 }}>Máximo 10 etiquetas por requisição. Se estiver de acordo com a sugestão clique imprimir.</small>
           <textarea
             rows={6}
-            placeholder="Ex.: 10 brisket 5 cupim 2 pork ribs"
+            placeholder="Ex.: 2 brisket 3 cupim 2 pork ribs"
             value={input}
             onChange={(e) => setInput(e.target.value)}
           />
         </label>
 
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-          <button type="button" onClick={onSubmit} disabled={loading || !input.trim()}>
-            {loading ? "Processando..." : "Interpretar e Imprimir"}
+          <button type="button" onClick={onInterpret} disabled={loading || !input.trim()}>
+            {loading ? "Processando..." : "Interpretar"}
+          </button>
+          <button type="button" onClick={onPrint} disabled={loading || !input.trim()}>
+            {loading ? "Processando..." : "Imprimir"}
           </button>
           <button type="button" className="secondary" onClick={onClear} disabled={loading}>
             Limpar

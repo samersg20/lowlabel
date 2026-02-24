@@ -54,6 +54,25 @@ model Item {
   updatedAt    DateTime    @updatedAt
 }
 
+model Method {
+  id            Int      @id @default(autoincrement())
+  name          String   @unique
+  durationValue Int
+  durationUnit  String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model Unit {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  email       String
+  phone       String
+  managerName String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
 
 model ItemGroup {
   id        String   @id @default(cuid())
