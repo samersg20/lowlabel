@@ -10,7 +10,6 @@ export async function GET() {
 
   const items = await prisma.item.findMany({ include: { group: true }, orderBy: { name: "asc" } });
   const rows = items.map((item) => ({
-    itemCode: item.itemCode,
     name: item.name,
     group: item.group?.name || "",
     sif: item.sif || "",

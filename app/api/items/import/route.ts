@@ -11,6 +11,24 @@ function parseFlag(value: string) {
   throw new Error("Valor de método inválido");
 }
 
+function validateName(name: string, sheetLine: number) {
+  const trimmed = name.trim();
+  if (!trimmed) throw new Error(`Linha ${sheetLine}: nome e grupo são obrigatórios`);
+  if (!/[A-Za-zÀ-ÿ]/.test(trimmed)) {
+    throw new Error(`Linha ${sheetLine}: nome inválido (${trimmed}). Informe um nome de produto`);
+  }
+  return trimmed;
+}
+
+function validateSif(sif: string | undefined, sheetLine: number) {
+  const trimmed = String(sif || "").trim();
+  if (!trimmed) return null;
+  if (!/^\d{1,20}$/.test(trimmed)) {
+    throw new Error(`Linha ${sheetLine}: SIF inválido (${trimmed}). Use apenas números`);
+  }
+  return trimmed;
+}
+
 export async function POST(req: Request) {
   try {
     const session = await auth();
@@ -26,23 +44,28 @@ export async function POST(req: Request) {
     const buffer = Buffer.from(await file.arrayBuffer());
     const rows = parseItemsWorkbook(buffer);
 
+    const nonEmptyRows = rows
+      .map((row, idx) => ({ row, sheetLine: idx + 2 }))
+      .filter(({ row }) => Object.values(row).some((value) => String(value || "").trim() !== ""));
+
     const groups = await prisma.itemGroup.findMany();
     const groupByName = new Map(groups.map((g) => [g.name.trim().toLowerCase(), g]));
 
     let created = 0;
     let updated = 0;
 
-    for (const [idx, row] of rows.entries()) {
+    for (const { row, sheetLine } of nonEmptyRows) {
       if (!row.name || !row.group) {
-        throw new Error(`Linha ${idx + 2}: nome e grupo são obrigatórios`);
+        throw new Error(`Linha ${sheetLine}: nome e grupo são obrigatórios`);
       }
+
       const group = groupByName.get(row.group.trim().toLowerCase());
-      if (!group) throw new Error(`Linha ${idx + 2}: grupo não encontrado (${row.group})`);
+      if (!group) throw new Error(`Linha ${sheetLine}: grupo não encontrado (${row.group})`);
 
       const data = {
-        name: row.name.trim(),
+        name: validateName(row.name, sheetLine),
         groupId: group.id,
-        sif: row.sif?.trim() || null,
+        sif: validateSif(row.sif, sheetLine),
         methodQuente: parseFlag(row.methodQuente),
         methodPistaFria: parseFlag(row.methodPistaFria),
         methodDescongelando: parseFlag(row.methodDescongelando),
@@ -51,13 +74,7 @@ export async function POST(req: Request) {
         methodAmbienteSecos: parseFlag(row.methodAmbienteSecos),
       };
 
-      let existing = null;
-      if (/^\d{6}$/.test(row.itemCode || "")) {
-        existing = await prisma.item.findUnique({ where: { itemCode: row.itemCode } });
-      }
-      if (!existing) {
-        existing = await prisma.item.findFirst({ where: { name: data.name, groupId: data.groupId } });
-      }
+      const existing = await prisma.item.findFirst({ where: { name: data.name, groupId: data.groupId } });
 
       if (existing) {
         await prisma.item.update({ where: { id: existing.id }, data: { ...data } });

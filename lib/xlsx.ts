@@ -3,7 +3,6 @@ import { inflateRawSync } from "zlib";
 type XlsxRow = Record<string, string>;
 
 const HEADERS = [
-  "itemCode",
   "name",
   "group",
   "sif",
@@ -15,12 +14,14 @@ const HEADERS = [
   "methodAmbienteSecos",
 ] as const;
 
+const LEGACY_HEADERS = ["itemCode", ...HEADERS] as const;
+
 function xmlEscape(value: string) {
   return value
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
+    .replace(/\"/g, "&quot;")
     .replace(/'/g, "&apos;");
 }
 
@@ -236,9 +237,19 @@ function unzipEntries(buf: Buffer) {
 
 function parseSharedStrings(xml: string) {
   const values: string[] = [];
-  const regex = /<si>[\s\S]*?<t[^>]*>([\s\S]*?)<\/t>[\s\S]*?<\/si>/g;
+  const regex = /<si>([\s\S]*?)<\/si>/g;
   let m;
-  while ((m = regex.exec(xml))) values.push(m[1].replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">"));
+  while ((m = regex.exec(xml))) {
+    const siContent = m[1] || "";
+    const pieces = Array.from(siContent.matchAll(/<t[^>]*>([\s\S]*?)<\/t>/g)).map((match) => match[1] || "");
+    values.push(
+      pieces
+        .join("")
+        .replace(/&amp;/g, "&")
+        .replace(/&lt;/g, "<")
+        .replace(/&gt;/g, ">"),
+    );
+  }
   return values;
 }
 
@@ -281,7 +292,6 @@ export function parseItemsWorkbook(data: Buffer): XlsxRow[] {
         value = v ? v[1] : "";
       }
 
-
       value = value.replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").trim();
       cellMap.set(index, value);
     }
@@ -290,18 +300,25 @@ export function parseItemsWorkbook(data: Buffer): XlsxRow[] {
 
   if (!rows.length) return [];
 
-  const header = HEADERS.map((_, i) => (rows[0].get(i) || "").trim());
-  if (header.join("|") !== HEADERS.join("|")) {
-    throw new Error(`Cabeçalhos inválidos na planilha. Esperado: ${HEADERS.join(", ")}. Recebido: ${header.join(", ")}`);
+  const header = Array.from({ length: LEGACY_HEADERS.length }, (_, i) => (rows[0].get(i) || "").trim());
+  const isNewHeader = header.slice(0, HEADERS.length).join("|") === HEADERS.join("|");
+  const isLegacyHeader = header.join("|") === LEGACY_HEADERS.join("|");
+
+  if (!isNewHeader && !isLegacyHeader) {
+    throw new Error(
+      `Cabeçalhos inválidos na planilha. Esperado: ${HEADERS.join(", ")} (ou legado com itemCode). Recebido: ${header.slice(0, HEADERS.length).join(", ")}`,
+    );
   }
+
+  const startCol = isLegacyHeader ? 1 : 0;
 
   return rows.slice(1).map((r) => {
     const obj: Record<string, string> = {};
     HEADERS.forEach((h, i) => {
-      obj[h] = (r.get(i) || "").trim();
+      obj[h] = (r.get(i + startCol) || "").trim();
     });
     return obj;
   });
 }
 
-export { HEADERS };
+export { HEADERS, LEGACY_HEADERS };

@@ -66,7 +66,7 @@ Checklist rápido:
 - Em `/items`, o card **Importar / Exportar Itens** permite baixar e enviar planilha `.xlsx`.
 - A importação **atualiza itens existentes** (quando encontra `itemCode`/nome+grupo) e **adiciona itens novos**.
 - Itens antigos **não são removidos automaticamente**; exclusão continua manual.
-- Cada item possui `itemCode` de 6 dígitos gerado pelo sistema, exibido apenas na planilha para facilitar identificação.
+- Cada item possui `itemCode` de 6 dígitos gerado automaticamente pelo sistema (uso interno); não é necessário preencher na planilha.
 
 ## Fluxo de impressão
 1. Faça login
