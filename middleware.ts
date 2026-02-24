@@ -15,10 +15,11 @@ export default withAuth(
     const isHomePage = pathname === "/";
     const isPrintPage = pathname === "/print";
     const isPrintEasyPage = pathname === "/print-easy";
+    const isPrintVoicePage = pathname === "/print-voice";
     const isPrintApi = pathname.startsWith("/api/prints");
     const isItemsReadApi = pathname.startsWith("/api/items") && req.method === "GET";
 
-    if (isHomePage || isPrintPage || isPrintEasyPage || isPrintApi || isItemsReadApi) {
+    if (isHomePage || isPrintPage || isPrintEasyPage || isPrintVoicePage || isPrintApi || isItemsReadApi) {
       return NextResponse.next();
     }
 

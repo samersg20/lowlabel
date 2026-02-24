@@ -16,7 +16,7 @@ export function Nav() {
   return (
     <div className="nav card">
       <Link href="/" style={{ marginRight: 8 }} aria-label="Ir para home">
-        <LowLogo width={92} compact />
+        <LowLogo width={112} compact />
       </Link>
 
       {isAdmin && (
@@ -38,11 +38,12 @@ export function Nav() {
         </div>
       )}
 
-      <Link href="/print" className="nav-emit">Emitir</Link>
-      <Link href="/print-easy" className="secondary">Emitir fácil</Link>
+      <Link href="/print" className="nav-btn nav-emit">Emitir</Link>
+      <Link href="/print-easy" className="nav-btn nav-digitar">DIGITAR</Link>
+      <Link href="/print-voice" className="nav-btn nav-falar">FALAR</Link>
 
       <span style={{ marginLeft: "auto" }}>Olá, {data.user.name} ({data.user.unit})</span>
-      <button className="secondary" onClick={() => signOut({ callbackUrl: "/login" })}>Sair</button>
+      <button className="secondary nav-btn" onClick={() => signOut({ callbackUrl: "/login" })}>Sair</button>
     </div>
   );
 }

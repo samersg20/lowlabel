@@ -104,8 +104,8 @@ export default function PrintPage() {
         </label>
 
         <label>
-          Quantidade (1-50)
-          <input type="number" min={1} max={50} value={quantity} onChange={(e) => setQuantity(Number(e.target.value))} />
+          Quantidade (1-20)
+          <input type="number" min={1} max={20} value={quantity} onChange={(e) => setQuantity(Number(e.target.value))} />
         </label>
 
         <button type="button" onClick={onPrint}>IMPRIMIR</button>

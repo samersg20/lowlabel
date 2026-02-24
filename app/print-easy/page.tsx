@@ -26,7 +26,7 @@ export default function PrintEasyPage() {
       const lines = (data.results || []).map((r: any) => `${r.quantity}x ${r.itemName} (${r.method})`);
       setMessage(`OK, impresso: ${lines.join(" | ")}`);
     } catch (e: any) {
-      setError(e.message || "Erro no emitir fácil");
+      setError(e.message || "Erro no DIGITAR");
     } finally {
       setLoading(false);
     }
@@ -34,10 +34,10 @@ export default function PrintEasyPage() {
 
   return (
     <>
-      <h1>Emitir Fácil</h1>
+      <h1>DIGITAR</h1>
       <div className="card grid">
         <label>
-          Pedido em texto corrido
+          Pedido em texto corrido (máximo de 10 etiquetas por item)
           <textarea
             rows={6}
             placeholder="Ex.: 10 brisket 5 cupim 2 pork ribs"

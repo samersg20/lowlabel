@@ -63,12 +63,14 @@ button.danger { background: #9f1027; }
 .nav-dropdown-trigger {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   cursor: pointer;
   font-weight: 700;
   background: #e1e6eb;
   border: 1px solid #bfcad4;
   border-radius: 8px;
-  padding: 8px 12px;
+  min-height: 40px;
+  padding: 8px 14px;
   color: #2f3a44;
 }
 .nav-dropdown-menu {
@@ -89,12 +91,30 @@ button.danger { background: #9f1027; }
   border-radius: 6px;
 }
 .nav-dropdown-menu a:hover { background: #eef4f8; }
+.nav-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-weight: 700;
+}
+
 .nav-emit {
   background: #f08a24;
   color: #fff;
-  border-radius: 8px;
-  padding: 8px 14px;
-  font-weight: 700;
 }
 .nav-emit:hover { background: #db7511; }
 
+.nav-digitar {
+  background: #895129;
+  color: #fff;
+}
+.nav-digitar:hover { background: #774522; }
+
+.nav-falar {
+  background: #cf5600;
+  color: #fff;
+}
+.nav-falar:hover { background: #b94d00; }
