@@ -71,6 +71,14 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: true, message: "OK, importado", created, updated });
   } catch (error) {
     console.error(error);
-    return NextResponse.json({ error: "Erro de importação, verifique o arquivo" }, { status: 400 });
+    const message = error instanceof Error ? error.message : "Erro de importação, verifique o arquivo";
+    const detailed =
+      message.startsWith("Linha") ||
+      message.startsWith("Cabeçalhos") ||
+      message.includes("Planilha inválida") ||
+      message.includes("Arquivo XLSX inválido") ||
+      message.includes("Compressão XLSX não suportada");
+
+    return NextResponse.json({ error: detailed ? message : "Erro de importação, verifique o arquivo" }, { status: 400 });
   }
 }

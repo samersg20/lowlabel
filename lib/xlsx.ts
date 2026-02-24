@@ -284,7 +284,7 @@ export function parseItemsWorkbook(data: Buffer): XlsxRow[] {
 
   const header = HEADERS.map((_, i) => (rows[0].get(i) || "").trim());
   if (header.join("|") !== HEADERS.join("|")) {
-    throw new Error("Cabeçalhos inválidos na planilha");
+    throw new Error(`Cabeçalhos inválidos na planilha. Esperado: ${HEADERS.join(", ")}. Recebido: ${header.join(", ")}`);
   }
 
   return rows.slice(1).map((r) => {
