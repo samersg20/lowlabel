@@ -12,6 +12,20 @@ const HEADERS = [
   "methodResfriado",
   "methodCongelado",
   "methodAmbienteSecos",
+  "preferredStorageMethod",
+] as const;
+
+const DISPLAY_HEADERS = [
+  "Item",
+  "Grupo",
+  "Sif",
+  "Quente (1)",
+  "Pista Fria (2)",
+  "Descongelando (3)",
+  "Resfriado (4)",
+  "Congelado (5)",
+  "Ambiente Secos (6)",
+  "Método Principal",
 ] as const;
 
 const LEGACY_HEADERS = ["itemCode", ...HEADERS] as const;
@@ -37,7 +51,7 @@ function columnLetter(index: number) {
 }
 
 function sheetXml(rows: XlsxRow[]) {
-  const headerRow = `<row r="1">${HEADERS.map((h, i) => `<c r="${columnLetter(i)}1" t="inlineStr"><is><t>${xmlEscape(h)}</t></is></c>`).join("")}</row>`;
+  const headerRow = `<row r="1">${DISPLAY_HEADERS.map((h, i) => `<c r="${columnLetter(i)}1" t="inlineStr"><is><t>${xmlEscape(h)}</t></is></c>`).join("")}</row>`;
   const bodyRows = rows
     .map((row, rowIndex) => {
       const r = rowIndex + 2;
@@ -301,12 +315,13 @@ export function parseItemsWorkbook(data: Buffer): XlsxRow[] {
   if (!rows.length) return [];
 
   const header = Array.from({ length: LEGACY_HEADERS.length }, (_, i) => (rows[0].get(i) || "").trim());
+  const isDisplayHeader = header.slice(0, DISPLAY_HEADERS.length).join("|") === DISPLAY_HEADERS.join("|");
   const isNewHeader = header.slice(0, HEADERS.length).join("|") === HEADERS.join("|");
   const isLegacyHeader = header.join("|") === LEGACY_HEADERS.join("|");
 
-  if (!isNewHeader && !isLegacyHeader) {
+  if (!isDisplayHeader && !isNewHeader && !isLegacyHeader) {
     throw new Error(
-      `Cabeçalhos inválidos na planilha. Esperado: ${HEADERS.join(", ")} (ou legado com itemCode). Recebido: ${header.slice(0, HEADERS.length).join(", ")}`,
+      `Cabeçalhos inválidos na planilha. Esperado: ${DISPLAY_HEADERS.join(", ")} (ou legado). Recebido: ${header.slice(0, DISPLAY_HEADERS.length).join(", ")}`,
     );
   }
 
@@ -321,4 +336,4 @@ export function parseItemsWorkbook(data: Buffer): XlsxRow[] {
   });
 }
 
-export { HEADERS, LEGACY_HEADERS };
+export { HEADERS, LEGACY_HEADERS, DISPLAY_HEADERS };

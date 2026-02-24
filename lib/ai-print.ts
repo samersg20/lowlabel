@@ -75,6 +75,59 @@ export async function processAiPrintOrder({
   model: string;
   maxQuantity: number;
 }) {
+  const parsedOrders = await parseAiPrintOrder({ input, model, maxQuantity });
+
+  const printerConfig = await prisma.printerConfig.findFirst({ where: { unit: sessionUser.unit, isActive: true } });
+  const results: Array<{ itemName: string; quantity: number; method: string; jobIds: number[] }> = [];
+
+  for (const parsed of parsedOrders) {
+    const producedAt = new Date();
+    const rule = STORAGE_METHOD_RULES[parsed.storageMethod];
+    const multiplier = rule.unit === "hours" ? 60 * 60 * 1000 : 24 * 60 * 60 * 1000;
+    const expiresAt = new Date(producedAt.getTime() + rule.amount * multiplier);
+
+    await prisma.labelPrint.create({
+      data: {
+        itemId: parsed.item.id,
+        storageMethod: parsed.storageMethod,
+        producedAt,
+        expiresAt,
+        userId: sessionUser.id,
+        quantity: parsed.quantity,
+      },
+    });
+
+    const zpl = makeZplLabel({
+      name: parsed.item.name,
+      storageMethod: parsed.storageMethod,
+      producedAt,
+      expiresAt,
+      userName: sessionUser.name,
+      sif: parsed.item.sif,
+    });
+
+    const jobIds = await submitRawZplToPrintNode(
+      zpl,
+      parsed.quantity,
+      `Etiqueta ${parsed.item.name} - ${parsed.storageMethod}`,
+      printerConfig ? { apiKey: printerConfig.apiKey, printerId: printerConfig.printerId } : undefined,
+    );
+
+    results.push({ itemName: parsed.item.name, quantity: parsed.quantity, method: parsed.storageMethod, jobIds });
+  }
+
+  return results;
+}
+
+export async function parseAiPrintOrder({
+  input,
+  model,
+  maxQuantity,
+}: {
+  input: string;
+  model: string;
+  maxQuantity: number;
+}) {
   const items = await prisma.item.findMany({
     select: {
       id: true,
@@ -97,8 +150,7 @@ export async function processAiPrintOrder({
   }
 
   const byId = new Map(items.map((i) => [i.id, i]));
-  const printerConfig = await prisma.printerConfig.findFirst({ where: { unit: sessionUser.unit, isActive: true } });
-  const results: Array<{ itemName: string; quantity: number; method: string; jobIds: number[] }> = [];
+  const parsedResults: Array<{ item: (typeof items)[number]; quantity: number; storageMethod: StorageMethod }> = [];
 
   for (const order of aiOrders) {
     const quantity = Number(order.quantity);
@@ -114,44 +166,12 @@ export async function processAiPrintOrder({
       throw new Error(`Item sem método habilitado: ${item.name}`);
     }
 
-    const rule = STORAGE_METHOD_RULES[storageMethod];
-    const producedAt = new Date();
-    const multiplier = rule.unit === "hours" ? 60 * 60 * 1000 : 24 * 60 * 60 * 1000;
-    const expiresAt = new Date(producedAt.getTime() + rule.amount * multiplier);
-
-    await prisma.labelPrint.create({
-      data: {
-        itemId: item.id,
-        storageMethod,
-        producedAt,
-        expiresAt,
-        userId: sessionUser.id,
-        quantity,
-      },
-    });
-
-    const zpl = makeZplLabel({
-      name: item.name,
-      storageMethod,
-      producedAt,
-      expiresAt,
-      userName: sessionUser.name,
-      sif: item.sif,
-    });
-
-    const jobIds = await submitRawZplToPrintNode(
-      zpl,
-      quantity,
-      `Etiqueta ${item.name} - ${storageMethod}`,
-      printerConfig ? { apiKey: printerConfig.apiKey, printerId: printerConfig.printerId } : undefined,
-    );
-
-    results.push({ itemName: item.name, quantity, method: storageMethod, jobIds });
+    parsedResults.push({ item, quantity, storageMethod });
   }
 
-  if (!results.length) {
+  if (!parsedResults.length) {
     throw new Error("Nenhum item válido encontrado para impressão");
   }
 
-  return results;
+  return parsedResults;
 }

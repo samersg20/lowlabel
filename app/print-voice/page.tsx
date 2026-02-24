@@ -56,7 +56,8 @@ export default function PrintVoicePage() {
         .trim();
 
       if (transcript) {
-        setInput((prev) => (prev ? `${prev} ${transcript}` : transcript));
+        setInput(transcript);
+        void interpretTranscript(transcript);
       }
     };
 
@@ -69,6 +70,27 @@ export default function PrintVoicePage() {
     };
 
     recognition.start();
+  }
+
+  async function interpretTranscript(text: string) {
+    setLoading(true);
+    setError("");
+    setMessage("");
+
+    try {
+      const res = await fetch("/api/prints/voice/parse", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ input: text }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || "Falha ao interpretar áudio");
+      setInput(String(data.parsedText || text));
+    } catch (e: any) {
+      setError(e.message || "Erro no Falar");
+    } finally {
+      setLoading(false);
+    }
   }
 
   async function onSubmit() {
@@ -107,7 +129,7 @@ export default function PrintVoicePage() {
       <h1>Falar</h1>
       <div className="card grid">
         <label>
-          Fale seu pedido ou edite o texto (máximo de 10 etiquetas por item)
+          Fale seu pedido. A IA vai organizar em linhas (qtd item método).
           <textarea
             rows={6}
             placeholder="Ex.: 10 brisket 5 cupim 2 pork ribs"
@@ -121,7 +143,7 @@ export default function PrintVoicePage() {
             {listening ? "Ouvindo..." : "Gravar voz"}
           </button>
           <button type="button" onClick={onSubmit} disabled={loading || !input.trim()}>
-            {loading ? "Processando..." : "Interpretar e Imprimir"}
+            {loading ? "Processando..." : "Imprimir"}
           </button>
           <button type="button" className="secondary" onClick={onClear} disabled={loading}>
             Limpar

@@ -170,7 +170,7 @@ export default function ItemsPage() {
 
       <div className="card">
         <h2 style={{ marginTop: 0 }}>Importar / Exportar Itens</h2>
-        <p style={{ marginTop: 0 }}>A importação adiciona novos itens e atualiza existentes, sem apagar itens antigos.</p>
+        <p style={{ marginTop: 0 }}>A importação adiciona novos itens e atualiza existentes, sem apagar itens antigos. Use S/N nos métodos e 1-6 no campo Método Principal.</p>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
           <button type="button" className="secondary" onClick={exportItems}>Exportar XLSX</button>
           <button type="button" onClick={() => fileInputRef.current?.click()}>Importar XLSX</button>

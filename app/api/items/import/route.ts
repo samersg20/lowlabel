@@ -6,9 +6,27 @@ import { NextResponse } from "next/server";
 
 function parseFlag(value: string) {
   const normalized = String(value || "").trim().toLowerCase();
-  if (["1", "true", "sim", "yes", "y"].includes(normalized)) return true;
-  if (["0", "false", "nao", "não", "no", "n", ""].includes(normalized)) return false;
+  if (["s", "sim", "1", "true", "yes", "y"].includes(normalized)) return true;
+  if (["n", "nao", "não", "0", "false", "no", ""].includes(normalized)) return false;
   throw new Error("Valor de método inválido");
+}
+
+function parsePreferredMethod(value: string, sheetLine: number) {
+  const normalized = String(value || "").trim();
+  if (!normalized) return null;
+  const byCode: Record<string, string> = {
+    "1": "QUENTE",
+    "2": "PISTA FRIA",
+    "3": "DESCONGELANDO",
+    "4": "RESFRIADO",
+    "5": "CONGELADO",
+    "6": "AMBIENTE SECOS",
+  };
+  const method = byCode[normalized];
+  if (!method) {
+    throw new Error(`Linha ${sheetLine}: Método Principal inválido (${normalized}). Use número de 1 a 6`);
+  }
+  return method;
 }
 
 function validateName(name: string, sheetLine: number) {
@@ -72,7 +90,21 @@ export async function POST(req: Request) {
         methodResfriado: parseFlag(row.methodResfriado),
         methodCongelado: parseFlag(row.methodCongelado),
         methodAmbienteSecos: parseFlag(row.methodAmbienteSecos),
+        preferredStorageMethod: parsePreferredMethod(row.preferredStorageMethod, sheetLine),
       };
+
+      const preferredEnabledMap: Record<string, boolean> = {
+        QUENTE: data.methodQuente,
+        "PISTA FRIA": data.methodPistaFria,
+        DESCONGELANDO: data.methodDescongelando,
+        RESFRIADO: data.methodResfriado,
+        CONGELADO: data.methodCongelado,
+        "AMBIENTE SECOS": data.methodAmbienteSecos,
+      };
+
+      if (data.preferredStorageMethod && !preferredEnabledMap[data.preferredStorageMethod]) {
+        throw new Error(`Linha ${sheetLine}: Método Principal deve estar marcado com S`);
+      }
 
       const existing = await prisma.item.findFirst({ where: { name: data.name, groupId: data.groupId } });
 
