@@ -21,7 +21,7 @@ button.danger { background: #9f1027; }
 .grid-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .grid-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 
-.section-label { margin: 0 0 8px; font-weight: 700; font-size: 20px; }
+.section-label { margin: 0 0 8px; font-weight: 700; font-size: 16px; }
 .method-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
 .method-pill {
   background: #e8edf2;
@@ -46,8 +46,39 @@ button.danger { background: #9f1027; }
 .nav-row-logo { justify-content: flex-start; }
 .nav-row-actions { flex-wrap: wrap; }
 .nav-row-user { justify-content: space-between; color: #495463; font-weight: 700; }
+.nav-logo img { width: 160px; height: auto; }
 .badge-ok { color: #0a7a00; font-weight: bold; }
 .badge-expired { color: #b00020; font-weight: bold; }
+
+.history-filters { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+
+.qty-control {
+  display: grid;
+  grid-template-columns: 80px 1fr 80px;
+  border: 2px solid #0b4c73;
+  border-radius: 14px;
+  overflow: hidden;
+  max-width: 520px;
+}
+
+.qty-btn {
+  border-radius: 0;
+  width: 100%;
+  min-height: 64px;
+  font-size: 42px;
+  line-height: 1;
+  background: #0b4c73;
+  color: #fff;
+}
+
+.qty-value {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 56px;
+  font-weight: 700;
+  background: #fff;
+}
 
 @media (max-width: 900px) {
   .grid-3 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -63,6 +94,11 @@ button.danger { background: #9f1027; }
   .nav-row-user { justify-content: center; flex-direction: column; gap: 4px; }
   .nav a, .nav button, .nav-dropdown-trigger { font-size: 14px; }
   .nav-dropdown-menu { position: static; box-shadow: none; margin-top: 6px; }
+  .nav-logo img { width: 220px; }
+  .history-filters { grid-template-columns: 1fr; }
+  .qty-control { grid-template-columns: 64px 1fr 64px; }
+  .qty-btn { min-height: 56px; font-size: 34px; }
+  .qty-value { font-size: 40px; }
   h1 { font-size: 32px; margin: 0 0 12px; }
 }
 
@@ -98,6 +134,15 @@ button.danger { background: #9f1027; }
   border-radius: 6px;
 }
 .nav-dropdown-menu a:hover { background: #eef4f8; }
+
+.nav-emit-dropdown .nav-dropdown-trigger {
+  background: #f0c52a;
+  border-color: #d2a711;
+  color: #2f2a1a;
+}
+
+.nav-emit-dropdown .nav-dropdown-menu a { font-weight: 700; }
+
 .nav-btn {
   display: inline-flex;
   align-items: center;

@@ -46,7 +46,7 @@ export default function HistoryPage() {
   return (
     <>
       <h1>Histórico de Emissões</h1>
-      <div className="card grid grid-3">
+      <div className="card grid history-filters">
         <select value={filters.itemId} onChange={(e) => setFilters({ ...filters, itemId: e.target.value })}>
           <option value="">Todos itens</option>
           {items.map((i) => <option key={i.id} value={i.id}>{i.name}</option>)}
@@ -69,6 +69,7 @@ export default function HistoryPage() {
         <button onClick={apply}>Filtrar</button>
       </div>
       <div className="card">
+        <div className="table-wrap">
         <table className="table">
           <thead>
             <tr><th>Item</th><th>Método</th><th>Produção</th><th>Validade</th><th>Qtd</th><th>Usuário</th><th>Filial</th><th>Status</th></tr>
@@ -91,6 +92,7 @@ export default function HistoryPage() {
             })}
           </tbody>
         </table>
+        </div>
       </div>
     </>
   );

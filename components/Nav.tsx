@@ -8,6 +8,7 @@ import { LowLogo } from "@/components/LowLogo";
 export function Nav() {
   const { data } = useSession();
   const [openCadastro, setOpenCadastro] = useState(false);
+  const [openEmitir, setOpenEmitir] = useState(false);
 
   if (!data?.user) return null;
 
@@ -17,7 +18,7 @@ export function Nav() {
   return (
     <div className="nav card">
       <div className="nav-row nav-row-logo">
-        <Link href="/" aria-label="Ir para home">
+        <Link href="/" aria-label="Ir para home" className="nav-logo">
           <LowLogo width={160} compact />
         </Link>
       </div>
@@ -39,9 +40,20 @@ export function Nav() {
             )}
           </div>
         )}
-        <Link href="/print" className="nav-btn nav-emit">Escolher</Link>
-        <Link href="/print-easy" className="nav-btn nav-digitar">Digitar</Link>
-        <Link href="/print-voice" className="nav-btn nav-falar">Falar</Link>
+        <div
+          className="nav-dropdown nav-emit-dropdown"
+          onMouseEnter={() => setOpenEmitir(true)}
+          onMouseLeave={() => setOpenEmitir(false)}
+        >
+          <span className="nav-dropdown-trigger">Emitir</span>
+          {openEmitir && (
+            <div className="nav-dropdown-menu">
+              <Link href="/print">Escolher</Link>
+              <Link href="/print-easy">Digitar</Link>
+              <Link href="/print-voice">Falar</Link>
+            </div>
+          )}
+        </div>
       </div>
 
       <div className="nav-row nav-row-user">

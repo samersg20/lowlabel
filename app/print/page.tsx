@@ -85,9 +85,18 @@ export default function PrintPage() {
     }
   }
 
+  function changeQuantity(delta: number) {
+    setQuantity((prev) => {
+      const next = prev + delta;
+      if (next < 1) return 1;
+      if (next > 20) return 20;
+      return next;
+    });
+  }
+
   return (
     <>
-      <h1>Escolher Etiqueta</h1>
+      <h1>Escolher</h1>
       <div className="card grid grid-2">
         <label>
           Item
@@ -103,10 +112,15 @@ export default function PrintPage() {
           </select>
         </label>
 
-        <label>
-          Quantidade (1-20)
-          <input type="number" min={1} max={20} value={quantity} onChange={(e) => setQuantity(Number(e.target.value))} />
-        </label>
+        <div>
+          <label>Quantidade (1-20)</label>
+          <div className="qty-control">
+            <button type="button" className="qty-btn" onClick={() => changeQuantity(1)}>+</button>
+            <div className="qty-value">{quantity}</div>
+            <button type="button" className="qty-btn" onClick={() => changeQuantity(-1)}>−</button>
+          </div>
+          <p style={{ margin: "8px 0 0", color: "#6a7380", fontSize: 14 }}>Mínimo: 1, Máximo: 20</p>
+        </div>
 
         <button type="button" onClick={onPrint}>IMPRIMIR</button>
       </div>
