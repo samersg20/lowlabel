@@ -25,16 +25,23 @@ export default function PrintEasyPage() {
 
       const lines = (data.results || []).map((r: any) => `${r.quantity}x ${r.itemName} (${r.method})`);
       setMessage(`OK, impresso: ${lines.join(" | ")}`);
+      setInput("");
     } catch (e: any) {
-      setError(e.message || "Erro no DIGITAR");
+      setError(e.message || "Erro no Digitar");
     } finally {
       setLoading(false);
     }
   }
 
+  function onClear() {
+    setInput("");
+    setError("");
+    setMessage("");
+  }
+
   return (
     <>
-      <h1>DIGITAR</h1>
+      <h1>Digitar</h1>
       <div className="card grid">
         <label>
           Pedido em texto corrido (máximo de 10 etiquetas por item)
@@ -45,9 +52,15 @@ export default function PrintEasyPage() {
             onChange={(e) => setInput(e.target.value)}
           />
         </label>
-        <button type="button" onClick={onSubmit} disabled={loading || !input.trim()}>
-          {loading ? "Processando..." : "Interpretar e Imprimir"}
-        </button>
+
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+          <button type="button" onClick={onSubmit} disabled={loading || !input.trim()}>
+            {loading ? "Processando..." : "Interpretar e Imprimir"}
+          </button>
+          <button type="button" className="secondary" onClick={onClear} disabled={loading}>
+            Limpar
+          </button>
+        </div>
       </div>
       {error && <div className="card" style={{ color: "#b00020" }}>{error}</div>}
       {message && <div className="card" style={{ color: "#0a7a00" }}>{message}</div>}

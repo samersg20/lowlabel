@@ -88,16 +88,23 @@ export default function PrintVoicePage() {
 
       const lines = (data.results || []).map((r: any) => `${r.quantity}x ${r.itemName} (${r.method})`);
       setMessage(`OK, impresso: ${lines.join(" | ")}`);
+      setInput("");
     } catch (e: any) {
-      setError(e.message || "Erro no FALAR");
+      setError(e.message || "Erro no Falar");
     } finally {
       setLoading(false);
     }
   }
 
+  function onClear() {
+    setInput("");
+    setError("");
+    setMessage("");
+  }
+
   return (
     <>
-      <h1>FALAR</h1>
+      <h1>Falar</h1>
       <div className="card grid">
         <label>
           Fale seu pedido ou edite o texto (máximo de 10 etiquetas por item)
@@ -115,6 +122,9 @@ export default function PrintVoicePage() {
           </button>
           <button type="button" onClick={onSubmit} disabled={loading || !input.trim()}>
             {loading ? "Processando..." : "Interpretar e Imprimir"}
+          </button>
+          <button type="button" className="secondary" onClick={onClear} disabled={loading}>
+            Limpar
           </button>
         </div>
       </div>

@@ -69,11 +69,11 @@ Checklist rápido:
 - Cada item possui `itemCode` de 6 dígitos gerado automaticamente pelo sistema (uso interno); não é necessário preencher na planilha.
 
 
-## DIGITAR e FALAR (IA com Gemini)
-- Acesse `/print-easy` (**DIGITAR**) para informar pedidos em texto corrido (ex.: `10 brisket 5 cupim 2 pork ribs`).
-- Acesse `/print-voice` (**FALAR**) para captar voz no navegador, converter para texto e enviar para interpretação.
+## Digitar e Falar (IA com Gemini)
+- Acesse `/print-easy` (**Digitar**) para informar pedidos em texto corrido (ex.: `10 brisket 5 cupim 2 pork ribs`).
+- Acesse `/print-voice` (**Falar**) para captar voz no navegador, converter para texto e enviar para interpretação.
 - Os dois módulos processam o conteúdo com Gemini e disparam impressão automaticamente.
-- Limite dos módulos DIGITAR/FALAR: **1 a 10 etiquetas por item**.
+- Limite dos módulos Digitar/Falar: **1 a 10 etiquetas por item**.
 - Configure no ambiente:
   - `GEMINI_API_KEY`
   - `GEMINI_MODEL` (opcional para DIGITAR; padrão `gemini-1.5-flash`)
@@ -99,7 +99,7 @@ Checklist rápido:
 - Métodos suportados: QUENTE (3h), PISTA FRIA (3h), DESCONGELANDO (3 dias), RESFRIADO (3 dias), CONGELADO (30 dias), AMBIENTE SECOS (30 dias).
 - Se um método não estiver marcado no item, ele não aparece na tela de emissão.
 - Módulo Emitir (`/print`) limitado entre 1 e 20.
-- Módulos DIGITAR e FALAR limitados entre 1 e 10 por item interpretado.
+- Módulos Digitar e Falar limitados entre 1 e 10 por item interpretado.
 
 
 ## Teste offline da API de prints (sem npm registry)

@@ -39,8 +39,8 @@ export function Nav() {
       )}
 
       <Link href="/print" className="nav-btn nav-emit">Emitir</Link>
-      <Link href="/print-easy" className="nav-btn nav-digitar">DIGITAR</Link>
-      <Link href="/print-voice" className="nav-btn nav-falar">FALAR</Link>
+      <Link href="/print-easy" className="nav-btn nav-digitar">Digitar</Link>
+      <Link href="/print-voice" className="nav-btn nav-falar">Falar</Link>
 
       <span style={{ marginLeft: "auto" }}>Olá, {data.user.name} ({data.user.unit})</span>
       <button className="secondary nav-btn" onClick={() => signOut({ callbackUrl: "/login" })}>Sair</button>

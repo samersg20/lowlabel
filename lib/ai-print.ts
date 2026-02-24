@@ -20,6 +20,11 @@ function enabledMethodsForItem(item: any): StorageMethod[] {
 
 function pickDefaultMethod(item: any): StorageMethod | null {
   const enabled = enabledMethodsForItem(item);
+
+  if (item.preferredStorageMethod && enabled.includes(item.preferredStorageMethod as StorageMethod)) {
+    return item.preferredStorageMethod as StorageMethod;
+  }
+
   return STORAGE_METHODS.find((m) => enabled.includes(m)) ?? null;
 }
 
@@ -81,6 +86,7 @@ export async function processAiPrintOrder({
       methodResfriado: true,
       methodCongelado: true,
       methodAmbienteSecos: true,
+      preferredStorageMethod: true,
     },
     orderBy: { name: "asc" },
   });

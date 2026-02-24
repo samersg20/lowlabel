@@ -10,6 +10,7 @@ type Item = {
   groupId?: string | null;
   group?: Group | null;
   sif?: string | null;
+  preferredStorageMethod?: string | null;
   methodQuente?: boolean;
   methodPistaFria?: boolean;
   methodDescongelando?: boolean;
@@ -22,6 +23,7 @@ const empty = {
   name: "",
   groupId: "",
   sif: "",
+  preferredStorageMethod: "",
   methodQuente: false,
   methodPistaFria: false,
   methodDescongelando: false,
@@ -76,6 +78,7 @@ export default function ItemsPage() {
       ...form,
       groupId: form.groupId || null,
       notes: null,
+      preferredStorageMethod: form.preferredStorageMethod || null,
     };
 
     const res = await fetch(`/api/items${editingId ? `/${editingId}` : ""}`, {
@@ -106,6 +109,7 @@ export default function ItemsPage() {
       ...empty,
       ...item,
       groupId: item.groupId ?? "",
+      preferredStorageMethod: item.preferredStorageMethod ?? "",
     });
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
@@ -117,7 +121,13 @@ export default function ItemsPage() {
 
   function toggleMethod(method: string) {
     const field = methodFieldByLabel[method];
-    setForm({ ...form, [field]: !form[field] });
+    const next = { ...form, [field]: !form[field] };
+
+    if (next.preferredStorageMethod && !next[methodFieldByLabel[next.preferredStorageMethod]]) {
+      next.preferredStorageMethod = "";
+    }
+
+    setForm(next);
   }
 
   async function exportItems() {
@@ -151,6 +161,8 @@ export default function ItemsPage() {
     setImportMessage(data.message || "OK, importado");
     load();
   }
+
+  const enabledOptions = STORAGE_METHODS.filter((method) => Boolean(form[methodFieldByLabel[method]]));
 
   return (
     <>
@@ -211,6 +223,19 @@ export default function ItemsPage() {
             </div>
           </div>
 
+          <label>
+            Método principal
+            <select
+              value={form.preferredStorageMethod}
+              onChange={(e) => setForm({ ...form, preferredStorageMethod: e.target.value })}
+            >
+              <option value="">Selecione (opcional)</option>
+              {enabledOptions.map((method) => (
+                <option key={method} value={method}>{method}</option>
+              ))}
+            </select>
+          </label>
+
           <button type="submit">{editingId ? "Salvar" : "Criar"}</button>
         </form>
         {error && <p style={{ color: "#b00020" }}>{error}</p>}
@@ -232,7 +257,7 @@ export default function ItemsPage() {
         <div className="table-wrap">
           <table className="table">
             <thead>
-              <tr><th>Nome</th><th>Grupo</th><th>Métodos</th><th>Ações</th></tr>
+              <tr><th>Nome</th><th>Grupo</th><th>Métodos</th><th>Método principal</th><th>Ações</th></tr>
             </thead>
             <tbody>
               {items.map((item) => (
@@ -240,6 +265,7 @@ export default function ItemsPage() {
                   <td>{item.name}</td>
                   <td>{item.group?.name || "-"}</td>
                   <td>{enabledMethods(item)}</td>
+                  <td>{item.preferredStorageMethod || "-"}</td>
                   <td>
                     <button className="secondary" onClick={() => startEdit(item)}>Editar</button>{" "}
                     <button className="danger" onClick={() => remove(item.id)}>Excluir</button>
