@@ -256,7 +256,6 @@ export function parseItemsWorkbook(data: Buffer): XlsxRow[] {
   let rowMatch;
   while ((rowMatch = rowRegex.exec(sheetXml))) {
     const cellMap = new Map<number, string>();
-<<<<<<< codex/create-mvp-web-app-safelabel-0qoca4
     const cellRegex = /<c([^>]*)>([\s\S]*?)<\/c>/g;
     let cellMatch;
     while ((cellMatch = cellRegex.exec(rowMatch[1]))) {
@@ -270,15 +269,6 @@ export function parseItemsWorkbook(data: Buffer): XlsxRow[] {
       const type = typeMatch?.[1];
       const index = col.split("").reduce((n, ch) => n * 26 + ch.charCodeAt(0) - 64, 0) - 1;
 
-=======
-    const cellRegex = /<c[^>]*r="([A-Z]+)(\d+)"[^>]*?(?:t="([^"]+)")?[^>]*>([\s\S]*?)<\/c>/g;
-    let cellMatch;
-    while ((cellMatch = cellRegex.exec(rowMatch[1]))) {
-      const col = cellMatch[1];
-      const type = cellMatch[3];
-      const inner = cellMatch[4];
-      const index = col.split("").reduce((n, ch) => n * 26 + ch.charCodeAt(0) - 64, 0) - 1;
->>>>>>> main
       let value = "";
       if (type === "inlineStr") {
         const t = inner.match(/<t[^>]*>([\s\S]*?)<\/t>/);
@@ -290,10 +280,8 @@ export function parseItemsWorkbook(data: Buffer): XlsxRow[] {
         const v = inner.match(/<v>([\s\S]*?)<\/v>/);
         value = v ? v[1] : "";
       }
-<<<<<<< codex/create-mvp-web-app-safelabel-0qoca4
 
-=======
->>>>>>> main
+
       value = value.replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").trim();
       cellMap.set(index, value);
     }

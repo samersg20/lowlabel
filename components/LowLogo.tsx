@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 
-const REQUESTED_LOGO_SRC = "/img/Lowlogo.png";
+const REQUESTED_LOGO_SRC = "https://raw.githubusercontent.com/samersg20/lowlabel/main/public/img/logo_croped.png";
 const FALLBACK_LOGO_SRC = "/lowbbq-logo.svg";
 
 export function LowLogo({ width = 220, compact = false }: { width?: number; compact?: boolean }) {

@@ -1,10 +1,7 @@
+import { LowLogo } from "@/components/LowLogo";
 import { auth } from "@/lib/auth";
 import { addDaysToDateKey, getSaoPauloDayRange, nowInSaoPauloDateKey } from "@/lib/date";
 import { prisma } from "@/lib/prisma";
-
-function HomeLogo() {
-  return <img src="/img/Lowlogo.png" alt="Low BBQ" width={180} height={70} style={{ objectFit: "contain" }} />;
-}
 
 export default async function Home() {
   const session = await auth();
@@ -12,7 +9,7 @@ export default async function Home() {
   if (!session?.user) {
     return (
       <div className="card" style={{ textAlign: "center" }}>
-        <HomeLogo />
+        <LowLogo width={180} />
         <h1>Bem-vindo ao Emissor Etiquetas Low</h1>
         <p>Faça login para acessar o sistema.</p>
       </div>
@@ -45,7 +42,7 @@ export default async function Home() {
   return (
     <>
       <div className="card" style={{ display: "flex", alignItems: "center", gap: 12 }}>
-        <HomeLogo />
+        <LowLogo width={180} />
         <h1 style={{ margin: 0 }}>Bem-vindo, {session.user.name}!</h1>
       </div>
       <div className="card grid grid-2">
