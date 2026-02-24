@@ -1,4 +1,5 @@
 import { auth } from "@/lib/auth";
+import { generateUniqueItemCode } from "@/lib/item-code";
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 
@@ -25,6 +26,7 @@ export async function POST(req: Request) {
   const body = await req.json();
   const created = await prisma.item.create({
     data: {
+      itemCode: await generateUniqueItemCode(),
       name: body.name,
       type: "GERAL",
       groupId: body.groupId || null,

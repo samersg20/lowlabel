@@ -1,7 +1,7 @@
 "use client";
 
 import { STORAGE_METHODS } from "@/lib/constants";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 type Group = { id: string; name: string };
 type Item = {
@@ -46,6 +46,9 @@ export default function ItemsPage() {
   const [form, setForm] = useState<any>(empty);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [error, setError] = useState("");
+  const [importMessage, setImportMessage] = useState("");
+  const [importError, setImportError] = useState("");
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   async function loadGroups() {
     const res = await fetch("/api/groups");
@@ -117,9 +120,63 @@ export default function ItemsPage() {
     setForm({ ...form, [field]: !form[field] });
   }
 
+  async function exportItems() {
+    const res = await fetch("/api/items/export");
+    if (!res.ok) {
+      setImportError("Erro ao exportar itens");
+      return;
+    }
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `itens-${new Date().toISOString().slice(0, 10)}.xlsx`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  }
+
+  async function importItems(file: File) {
+    setImportMessage("");
+    setImportError("");
+    const formData = new FormData();
+    formData.append("file", file);
+    const res = await fetch("/api/items/import", { method: "POST", body: formData });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      setImportError(data.error || "Erro de importação, verifique o arquivo");
+      return;
+    }
+    setImportMessage(data.message || "OK, importado");
+    load();
+  }
+
   return (
     <>
       <h1>Itens</h1>
+
+      <div className="card">
+        <h2 style={{ marginTop: 0 }}>Importar / Exportar Itens</h2>
+        <p style={{ marginTop: 0 }}>A importação adiciona novos itens e atualiza existentes, sem apagar itens antigos.</p>
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+          <button type="button" className="secondary" onClick={exportItems}>Exportar XLSX</button>
+          <button type="button" onClick={() => fileInputRef.current?.click()}>Importar XLSX</button>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            style={{ display: "none" }}
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) importItems(file);
+              e.currentTarget.value = "";
+            }}
+          />
+        </div>
+        {importMessage && <p style={{ color: "#0b7a2a", fontWeight: 600 }}>{importMessage}</p>}
+        {importError && <p style={{ color: "#b00020", fontWeight: 600 }}>{importError}</p>}
+      </div>
 
       <div className="card">
         <form className="grid grid-3" onSubmit={submit}>

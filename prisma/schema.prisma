@@ -30,6 +30,7 @@ model User {
 
 model Item {
   id           String      @id @default(cuid())
+  itemCode     String      @unique
   name         String
   type         String      @default("GERAL")
   groupId      String?

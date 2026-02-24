@@ -56,10 +56,17 @@ Checklist rápido:
 - **Segurança:** não versionar chave no repositório; configure no ambiente (`.env` local e variáveis no deploy).
 
 ## Módulos
-- `/items`: cadastro e filtro de itens por grupo
+- `/items`: cadastro e filtro de itens por grupo, com importação/exportação em XLSX
 - `/groups`: cadastro/edição de grupos
 - `/users`: cadastro/edição de usuários com unidade BROOKLIN/PINHEIROS
 - `/printers`: cadastro de impressoras por unidade (API key + printer id PrintNode)
+
+
+## Importação e exportação de itens (XLSX)
+- Em `/items`, o card **Importar / Exportar Itens** permite baixar e enviar planilha `.xlsx`.
+- A importação **atualiza itens existentes** (quando encontra `itemCode`/nome+grupo) e **adiciona itens novos**.
+- Itens antigos **não são removidos automaticamente**; exclusão continua manual.
+- Cada item possui `itemCode` de 6 dígitos gerado pelo sistema, exibido apenas na planilha para facilitar identificação.
 
 ## Fluxo de impressão
 1. Faça login
