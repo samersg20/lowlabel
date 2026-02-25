@@ -29,9 +29,6 @@ export default async function Home() {
 
   return (
     <>
-      <div className="card" style={{ display: "flex", alignItems: "center", gap: 12 }}>
-        <h1 style={{ margin: 0 }}>Bem-vindo(a), {session.user.name}!</h1>
-      </div>
       <div className="grid grid-2">
         <div className="card" style={{ background: "#e9edf1" }}><h2 style={{ marginTop: 0 }}>Emitidas hoje</h2><p style={{ fontSize: 40, fontWeight: 700, margin: "8px 0" }}>{totalHoje}</p></div>
         <div className="card" style={{ background: "#e9edf1" }}><h2 style={{ marginTop: 0 }}>Emitidas hoje ({unitShort})</h2><p style={{ fontSize: 40, fontWeight: 700, margin: "8px 0" }}>{totalHojeUnidade}</p></div>

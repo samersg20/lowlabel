@@ -43,9 +43,9 @@ button.danger { background: #9f1027; }
 
 .nav { display:flex; flex-direction: column; gap:10px; margin-bottom:16px; }
 .nav-row { display:flex; align-items:center; gap:10px; width:100%; }
-.nav-row-logo { justify-content: flex-start; }
-.nav-row-actions { flex-wrap: wrap; }
-.nav-row-user { justify-content: space-between; color: #495463; font-weight: 700; }
+.nav-row-logo { justify-content: center; }
+.nav-row-actions { flex-wrap: wrap; width: 100%; }
+.nav-row-user { justify-content: space-between; color: #495463; font-weight: 700; margin-top: 8px; }
 .nav-logo img { width: 160px; height: auto; }
 .badge-ok { color: #0a7a00; font-weight: bold; }
 .badge-expired { color: #b00020; font-weight: bold; }
@@ -103,6 +103,7 @@ button.danger { background: #9f1027; }
 }
 
 .nav-dropdown { position: relative; display: inline-block; padding-bottom: 10px; margin-bottom: -10px; }
+.nav-row-actions .nav-dropdown { flex: 1 1 220px; }
 .nav-dropdown-trigger {
   display: inline-flex;
   align-items: center;
@@ -115,6 +116,7 @@ button.danger { background: #9f1027; }
   min-height: 40px;
   padding: 8px 14px;
   color: #2f3a44;
+  width: 100%;
 }
 .nav-dropdown-menu {
   position: absolute;

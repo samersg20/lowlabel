@@ -5,6 +5,7 @@ import { useState } from "react";
 export default function PrintEasyPage() {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
+  const [canPrint, setCanPrint] = useState(false);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
 
@@ -21,6 +22,7 @@ export default function PrintEasyPage() {
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error || "Falha ao interpretar");
       setInput(String(data.parsedText || input));
+      setCanPrint(true);
     } catch (e: any) {
       setError(e.message || "Erro no Digitar");
     } finally {
@@ -46,6 +48,7 @@ export default function PrintEasyPage() {
       const lines = (data.results || []).map((r: any) => `${r.quantity}x ${r.itemName} (${r.method})`);
       setMessage(`OK, impresso: ${lines.join(" | ")}`);
       setInput("");
+      setCanPrint(false);
     } catch (e: any) {
       setError(e.message || "Erro no Digitar");
     } finally {
@@ -57,26 +60,32 @@ export default function PrintEasyPage() {
     setInput("");
     setError("");
     setMessage("");
+    setCanPrint(false);
   }
 
   return (
     <>
       <h1>Digitar</h1>
       <div className="card grid">
-        <p style={{ margin: 0, fontWeight: 700 }}>Escreva seu pedido. Vamos organizar em linhas (QTD / ITEM / MÉTODO).</p>
-        <p style={{ margin: 0, color: "#5b6774", fontSize: 13 }}>Máximo 10 etiquetas por requisição. Se estiver de acordo com a sugestão clique imprimir.</p>
+        <p style={{ margin: 0 }}>
+          <span style={{ fontWeight: 700 }}>Escreva seu pedido. Vamos organizar em linhas (QTD / ITEM / MÉTODO).</span><br />
+          <span style={{ color: "#5b6774", fontSize: 13 }}>Máximo 10 etiquetas por requisição. Se estiver de acordo com a sugestão clique imprimir.</span>
+        </p>
         <textarea
           rows={6}
           placeholder="Ex.: 2 brisket 3 cupim 2 pork ribs"
           value={input}
-          onChange={(e) => setInput(e.target.value)}
+          onChange={(e) => {
+            setInput(e.target.value);
+            setCanPrint(false);
+          }}
         />
 
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
           <button type="button" onClick={onInterpret} disabled={loading || !input.trim()}>
             {loading ? "Processando..." : "Interpretar"}
           </button>
-          <button type="button" onClick={onPrint} disabled={loading || !input.trim()}>
+          <button type="button" onClick={onPrint} disabled={loading || !canPrint} className={!canPrint ? "secondary" : ""}>
             {loading ? "Processando..." : "Imprimir"}
           </button>
           <button type="button" className="secondary" onClick={onClear} disabled={loading}>
