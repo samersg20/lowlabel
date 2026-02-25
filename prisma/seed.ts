@@ -5,10 +5,20 @@ const prisma = new PrismaClient();
 
 async function upsertUser(name: string, username: string, email: string, password: string, role: string, unit: string) {
   const passwordHash = await bcrypt.hash(password, 10);
-  await prisma.user.upsert({
-    where: { email },
-    update: { name, username, passwordHash, role, unit },
-    create: { name, username, email, passwordHash, role, unit },
+  const byUsername = await prisma.user.findUnique({ where: { username } });
+  const byEmail = await prisma.user.findUnique({ where: { email } });
+  const existing = byUsername ?? byEmail;
+
+  if (existing) {
+    await prisma.user.update({
+      where: { id: existing.id },
+      data: { name, username, email, passwordHash, role, unit },
+    });
+    return;
+  }
+
+  await prisma.user.create({
+    data: { name, username, email, passwordHash, role, unit },
   });
 }
 
