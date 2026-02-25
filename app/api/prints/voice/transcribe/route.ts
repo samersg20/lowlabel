@@ -12,31 +12,23 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Arquivo de áudio é obrigatório" }, { status: 400 });
     }
 
-    const normalizedKeyValues = [
-      ["GROQ_API_KEY", process.env.GROQ_API_KEY],
-      ["GROQ_APIKEY", process.env.GROQ_APIKEY],
-      ["GROQ_VOICE_API_KEY", process.env.GROQ_VOICE_API_KEY],
-    ] as const;
-
-    const sanitizedValues = normalizedKeyValues
-      .map(([name, value]) => [name, String(value || "").trim().replace(/^['\"]|['\"]$/g, "")] as const)
-      .filter(([, value]) => Boolean(value));
-
+    const apiKey = String(
+      process.env.GROQ_API_KEY || process.env.GROQ_APIKEY || process.env.GROQ_VOICE_API_KEY || "",
+    )
+      .trim()
+      .replace(/^['\"]|['\"]$/g, "");
     const orgId = String(process.env.GROQ_ORG_ID || "").trim();
-    const gskEntry = sanitizedValues.find(([, value]) => /^gsk_/i.test(value));
-    const apiKey = gskEntry?.[1] || "";
 
     if (!apiKey) {
-      if (!sanitizedValues.length) {
-        return NextResponse.json({ error: "Configure GROQ_API_KEY com uma chave Groq válida (prefixo gsk_)." }, { status: 500 });
-      }
+      return NextResponse.json({ error: "Configure GROQ_API_KEY (fallback: GROQ_APIKEY ou GROQ_VOICE_API_KEY)." }, { status: 500 });
+    }
 
-      const mistakenValue = sanitizedValues[0]?.[1] || "";
-      if (mistakenValue === orgId || /^org_/i.test(mistakenValue)) {
-        return NextResponse.json({ error: "Chave inválida: GROQ_ORG_ID identifica a organização e não funciona como API key. Gere uma chave em API Keys com prefixo gsk_." }, { status: 400 });
-      }
+    if (apiKey === orgId || /^org_/i.test(apiKey)) {
+      return NextResponse.json({ error: "Chave inválida: GROQ_ORG_ID identifica a organização e não funciona como API key. Gere uma chave em API Keys com prefixo gsk_." }, { status: 400 });
+    }
 
-      return NextResponse.json({ error: "Chave Groq inválida. Use GROQ_API_KEY com valor que comece com gsk_." }, { status: 400 });
+    if (!/^gsk_/i.test(apiKey)) {
+      return NextResponse.json({ error: "Chave Groq inválida. A API key deve começar com 'gsk_' (sem espaços)." }, { status: 400 });
     }
 
     const transcriptionModel = "whisper-large-v3-turbo";
