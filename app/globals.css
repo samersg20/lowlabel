@@ -81,11 +81,26 @@ button.print-submit { background: #28A745; color: #fff; }
   background: #fff;
 }
 
+.print-actions-row {
+  display: flex;
+  gap: 20px;
+  align-items: flex-end;
+}
+
+.print-actions-row > div {
+  flex: 1 1 0;
+}
+
 .print-submit-wrap {
   width: 100%;
   max-width: 520px;
-  align-self: start;
-  padding-top: 42px;
+  align-self: auto;
+  padding-top: 0;
+}
+
+.print-submit-spacer {
+  visibility: hidden;
+  user-select: none;
 }
 
 .print-submit-wrap .print-submit {
@@ -120,8 +135,9 @@ button.print-submit { background: #28A745; color: #fff; }
   .qty-control { grid-template-columns: 64px 1fr 64px; }
   .qty-btn { min-height: 56px; font-size: 34px; }
   .qty-value { font-size: 40px; }
+  .print-actions-row { flex-direction: column; align-items: stretch; gap: 12px; }
   .print-submit-wrap { max-width: none; }
-  .print-submit-wrap { padding-top: 0; }
+  .print-submit-spacer { display: none; }
   .print-submit-wrap .print-submit { min-height: 56px; }
   h1 { font-size: 32px; margin: 0 0 12px; }
 }

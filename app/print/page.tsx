@@ -121,17 +121,20 @@ export default function PrintPage() {
           </select>
         </label>
 
-        <div>
-          <label>Quantidade Mín:1 Máx 20</label>
-          <div className="qty-control">
-            <button type="button" className="qty-btn" onClick={() => changeQuantity(1)}>+</button>
-            <div className="qty-value">{quantity}</div>
-            <button type="button" className="qty-btn" onClick={() => changeQuantity(-1)}>−</button>
+        <div className="print-actions-row" style={{ gridColumn: "1 / -1" }}>
+          <div>
+            <label>Quantidade Mín:1 Máx 20</label>
+            <div className="qty-control">
+              <button type="button" className="qty-btn" onClick={() => changeQuantity(1)}>+</button>
+              <div className="qty-value">{quantity}</div>
+              <button type="button" className="qty-btn" onClick={() => changeQuantity(-1)}>−</button>
+            </div>
           </div>
-        </div>
 
-        <div className="print-submit-wrap">
-          <button type="button" onClick={onPrint} className="print-submit">IMPRIMIR</button>
+          <div className="print-submit-wrap">
+            <label className="print-submit-spacer" aria-hidden="true">Quantidade Mín:1 Máx 20</label>
+            <button type="button" onClick={onPrint} className="print-submit">IMPRIMIR</button>
+          </div>
         </div>
       </div>
 
