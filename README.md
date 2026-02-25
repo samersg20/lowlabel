@@ -47,7 +47,7 @@ NEXT_PUBLIC_APP_URL="https://seu-dominio.com"
 Fluxo implementado:
 - `POST /api/checkout`: cria sessão de checkout no modo `subscription` (mensal).
 - `POST /api/stripe/webhook`: escuta `checkout.session.completed`, valida assinatura (`Stripe-Signature`) e extrai `customerId` e `email`.
-- Cadastro (`/register`) cria conta ADMIN + tenant, define quantidade de impressoras e já inicia checkout de assinatura recorrente.
+- `SubscribeButton`: chama `/api/checkout` e redireciona para o checkout Stripe via `stripe.redirectToCheckout`.
 - Páginas de retorno: `/billing/success` e `/billing/cancel`.
 
 
@@ -101,8 +101,7 @@ Checklist rápido:
 - Configure no ambiente:
   - `GEMINI_API_KEY`
   - `GEMINI_MODEL` (opcional para DIGITAR; padrão `gemini-1.5-flash`)
-  - `GROQ_API_KEY` para transcrição de voz com Groq Whisper (`whisper-large-v3-turbo`)
-  - FALAR usa Gemini `gemini-3-flash-preview` para interpretação do texto transcrito.
+  - FALAR usa modelo fixo `gemini-3-flash-preview`.
 
 ## Fluxo de impressão
 1. Faça login
@@ -155,10 +154,3 @@ O script valida automaticamente:
 - Validade baseada na tabela fixa de métodos (horas/dias) e apenas para métodos marcados no item.
 - Exibição de data/hora formatada em fuso `America/Sao_Paulo` (Brasil).
 - Texto da etiqueta sem acentos para melhor compatibilidade de impressão térmica.
-
-
-## Multi-tenant
-- Cada conta criada gera um `tenant` com base própria de cadastros (itens, grupos, métodos, unidades, impressoras, histórico e usuários).
-- O primeiro usuário da conta nasce como `ADMIN`.
-- Uma unidade inicial é criada automaticamente com o nome do bairro informado no cadastro.
-- O limite de impressoras é controlado pelo plano contratado no Stripe.

@@ -1,7 +1,6 @@
 import { createHmac, timingSafeEqual } from "crypto";
 import { NextResponse } from "next/server";
 import { getStripeWebhookSecret } from "@/lib/stripe";
-import { prisma } from "@/lib/prisma";
 
 function parseStripeSignature(signature: string) {
   const parts = signature.split(",").map((part) => part.trim());
@@ -32,33 +31,10 @@ function verifyStripeSignature(payload: string, signatureHeader: string, secret:
   return timingSafeEqual(expectedBuffer, receivedBuffer);
 }
 
-async function handleSubscriptionCheckoutCompleted(session: any) {
-  const customerId = String(session.customer || "");
-  const subscriptionId = String(session.subscription || "");
-  const email = session.customer_details?.email || session.customer_email || null;
-  const tenantId = session.metadata?.tenantId ? String(session.metadata.tenantId) : null;
-  const printerLimit = Number(session.metadata?.printerLimit || 1);
-
-  if (tenantId) {
-    await prisma.tenant.update({
-      where: { id: tenantId },
-      data: {
-        stripeCustomerId: customerId || undefined,
-        stripeSubscriptionId: subscriptionId || undefined,
-        subscriptionStatus: "active",
-        printerLimit: Number.isFinite(printerLimit) ? Math.max(1, printerLimit) : 1,
-      },
-    });
-  }
-
-  if (email && customerId) {
-    await prisma.user.updateMany({
-      where: { email },
-      data: { role: "ADMIN" },
-    });
-  }
-
-  console.log("[stripe] assinatura concluída", { customerId, email, tenantId, printerLimit });
+async function handleSubscriptionCheckoutCompleted(customerId: string, email: string | null) {
+  // TODO: Integrar com Prisma/Supabase:
+  // Exemplo Prisma: await prisma.user.update({ where: { email }, data: { stripeCustomerId: customerId } })
+  console.log("[stripe] assinatura concluída", { customerId, email });
 }
 
 export async function POST(req: Request) {
@@ -81,8 +57,14 @@ export async function POST(req: Request) {
 
     if (event.type === "checkout.session.completed") {
       const session = event.data?.object;
+
       if (session?.mode === "subscription") {
-        await handleSubscriptionCheckoutCompleted(session);
+        const customerId = String(session.customer || "");
+        const email = session.customer_details?.email || session.customer_email || null;
+
+        if (customerId) {
+          await handleSubscriptionCheckoutCompleted(customerId, email);
+        }
       }
     }
 

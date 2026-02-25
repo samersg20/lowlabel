@@ -7,37 +7,10 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Tenant {
-  id                String          @id @default(cuid())
-  companyName       String
-  legalName         String?
-  tradeName         String?
-  cnpj              String?         @unique
-  businessAddress   String?
-  neighborhood      String?
-  city              String?
-  state             String?
-  zipCode           String?
-  stateRegistration String?
-  printerLimit      Int             @default(1)
-  stripeCustomerId  String?
-  stripeSubscriptionId String?
-  subscriptionStatus String?
-  users             User[]
-  items             Item[]
-  methods           Method[]
-  units             Unit[]
-  groups            ItemGroup[]
-  printers          PrinterConfig[]
-  prints            LabelPrint[]
-  createdAt         DateTime        @default(now())
-  updatedAt         DateTime        @updatedAt
-}
+
 
 model User {
   id            String       @id @default(cuid())
-  tenantId      String?
-  tenant        Tenant?      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   name          String
   email         String       @unique
   username      String?      @unique
@@ -53,14 +26,10 @@ model User {
   passwordResetTokens PasswordResetToken[]
   createdAt     DateTime     @default(now())
   updatedAt     DateTime     @updatedAt
-
-  @@index([tenantId])
 }
 
 model Item {
   id           String      @id @default(cuid())
-  tenantId     String?
-  tenant       Tenant?     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   itemCode     String      @unique
   name         String
   type         String      @default("GERAL")
@@ -83,53 +52,39 @@ model Item {
   prints       LabelPrint[]
   createdAt    DateTime    @default(now())
   updatedAt    DateTime    @updatedAt
-
-  @@index([tenantId])
 }
 
 model Method {
   id            Int      @id @default(autoincrement())
-  tenantId      String?
-  tenant        Tenant?  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  name          String
+  name          String   @unique
   durationValue Int
   durationUnit  String
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
-
-  @@unique([tenantId, name])
 }
 
 model Unit {
   id          String   @id @default(cuid())
-  tenantId    String?
-  tenant      Tenant?  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  name        String
+  name        String   @unique
   email       String
   phone       String
   managerName String
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
-
-  @@unique([tenantId, name])
 }
+
 
 model ItemGroup {
   id        String   @id @default(cuid())
-  tenantId  String?
-  tenant    Tenant?  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  name      String
+  name      String   @unique
   items     Item[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
-  @@unique([tenantId, name])
 }
+
 
 model PrinterConfig {
   id        String   @id @default(cuid())
-  tenantId  String?
-  tenant    Tenant?  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   name      String
   unit      String
   apiKey    String
@@ -140,8 +95,9 @@ model PrinterConfig {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@unique([tenantId, unit])
+  @@unique([unit])
 }
+
 
 model PasswordResetToken {
   id        String   @id @default(cuid())
@@ -157,8 +113,6 @@ model PasswordResetToken {
 
 model LabelPrint {
   id            String        @id @default(cuid())
-  tenantId      String?
-  tenant        Tenant?       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   itemId        String
   item          Item          @relation(fields: [itemId], references: [id], onDelete: Restrict)
   storageMethod String
@@ -168,8 +122,6 @@ model LabelPrint {
   user          User          @relation(fields: [userId], references: [id], onDelete: Restrict)
   quantity      Int
   createdAt     DateTime      @default(now())
-
-  @@index([tenantId])
 }
 
 model Account {

@@ -13,7 +13,7 @@ export function Nav() {
   if (!data?.user) return null;
 
   const isAdmin = data.user.role === "ADMIN";
-  const companyLabel = data.user.companyName || data.user.name;
+  const unitShort = String(data.user.unit || "").slice(0, 3).toUpperCase();
 
   return (
     <div className="nav card">
@@ -40,23 +40,24 @@ export function Nav() {
             )}
           </div>
         )}
-        <div className="nav-dropdown nav-emit-dropdown" onMouseEnter={() => setOpenEmitir(true)} onMouseLeave={() => setOpenEmitir(false)}>
+        <div
+          className="nav-dropdown nav-emit-dropdown"
+          onMouseEnter={() => setOpenEmitir(true)}
+          onMouseLeave={() => setOpenEmitir(false)}
+        >
           <span className="nav-dropdown-trigger">Emitir</span>
           {openEmitir && (
             <div className="nav-dropdown-menu">
-              <Link href="/print">Tradicional</Link>
-              <Link href="/print-easy">Texto IA</Link>
-              <Link href="/print-voice">Voz IA</Link>
+              <Link href="/print">Escolher</Link>
+              <Link href="/print-easy">Digitar (IA)</Link>
+              <Link href="/print-voice">Falar (IA)</Link>
             </div>
           )}
         </div>
       </div>
 
       <div className="nav-row nav-row-user">
-        <div style={{ display: "grid", gap: 2 }}>
-          {isAdmin ? <Link href="/admin" style={{ textDecoration: "underline" }}>{companyLabel}</Link> : <span>{companyLabel}</span>}
-          <span style={{ fontSize: 13, color: "#5b6774" }}>{data.user.unit}</span>
-        </div>
+        <span>Olá, {data.user.name} ({unitShort})</span>
         <button className="nav-signout" onClick={() => signOut({ callbackUrl: "/login" })}>Sair</button>
       </div>
     </div>
