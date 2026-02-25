@@ -3,6 +3,7 @@ import { execSync } from "node:child_process";
 const url = process.env.DATABASE_URL ?? "";
 const skip = process.env.SKIP_DB_SEED === "1" || process.env.SKIP_DB_SEED === "true";
 const strictSeed = process.env.STRICT_DB_SEED === "1" || process.env.STRICT_DB_SEED === "true";
+const strictMigrate = process.env.STRICT_DB_MIGRATE === "1" || process.env.STRICT_DB_MIGRATE === "true";
 
 if (skip) {
   console.log("[build] SKIP_DB_SEED habilitado; seed ignorado.");
@@ -38,6 +39,10 @@ function extractFailedMigrationName(outputText) {
   return match?.[1] || null;
 }
 
+function isDbConnectionError(outputText) {
+  return /Error:\s*P1001/i.test(outputText) || /Can't reach database server/i.test(outputText) || /ECONNREFUSED|ETIMEDOUT|ENOTFOUND/i.test(outputText);
+}
+
 console.log("[build] Executando prisma migrate deploy...");
 let migrate = run("npx prisma migrate deploy");
 
@@ -56,6 +61,10 @@ if (!migrate.ok && migrate.text.includes("Error: P3009")) {
 }
 
 if (!migrate.ok) {
+  if (isDbConnectionError(migrate.text) && !strictMigrate) {
+    console.warn("[build] Aviso: banco indisponível durante migrate deploy (P1001/rede). Seguindo build sem migrate/seed. Defina STRICT_DB_MIGRATE=1 para falhar.");
+    process.exit(0);
+  }
   throw new Error("[build] prisma migrate deploy falhou.");
 }
 
