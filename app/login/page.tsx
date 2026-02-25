@@ -27,7 +27,6 @@ export default function LoginPage() {
   return (
     <div className="card" style={{ maxWidth: 460, margin: "40px auto", textAlign: "center" }}>
       <LowLogo width={220} />
-      <h1>Etiketi</h1>
       <form className="grid" onSubmit={onSubmit} style={{ textAlign: "left" }}>
         <label>Usuário ou e-mail<input name="identifier" type="text" required value={identifier} onChange={(e) => setIdentifier(e.target.value)} /></label>
         <label>Senha<input name="password" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} /></label>
