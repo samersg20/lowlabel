@@ -65,7 +65,6 @@ export default function PrintEasyPage() {
 
   return (
     <>
-      <h1>Texto IA</h1>
       <div className="card grid">
         <p style={{ margin: 0 }}>
           <span style={{ fontWeight: 700 }}>Escreva seu pedido.</span><br />

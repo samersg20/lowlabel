@@ -1,11 +1,19 @@
 import { auth } from "@/lib/auth";
-import { STORAGE_METHODS, type StorageMethod } from "@/lib/constants";
-import { generateUniqueItemCode } from "@/lib/item-code";
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
+import { generateUniqueItemCode } from "@/lib/item-code";
 
-function enabledMethodsFromBody(body: any): StorageMethod[] {
-  const methods: StorageMethod[] = [];
+type LegacyFlags = {
+  methodQuente?: boolean;
+  methodPistaFria?: boolean;
+  methodDescongelando?: boolean;
+  methodResfriado?: boolean;
+  methodCongelado?: boolean;
+  methodAmbienteSecos?: boolean;
+};
+
+function selectedMethodsFromLegacy(body: LegacyFlags) {
+  const methods: string[] = [];
   if (Boolean(body.methodQuente)) methods.push("QUENTE");
   if (Boolean(body.methodPistaFria)) methods.push("PISTA FRIA");
   if (Boolean(body.methodDescongelando)) methods.push("DESCONGELANDO");
@@ -15,21 +23,36 @@ function enabledMethodsFromBody(body: any): StorageMethod[] {
   return methods;
 }
 
-function ensureAtLeastOneEnabledMethod(body: any) {
-  const enabled = enabledMethodsFromBody(body);
-  if (!enabled.length) throw new Error("Selecione ao menos um método aplicável");
+function sanitizeSelectedMethods(body: any): string[] {
+  if (Array.isArray(body.selectedMethods)) {
+    const unique = Array.from(new Set(body.selectedMethods.map((m: any) => String(m || "").trim().toUpperCase()).filter((m: string) => Boolean(m)))) as string[];
+    if (!unique.length) throw new Error("Selecione ao menos um método aplicável");
+    return unique;
+  }
+
+  const legacy = selectedMethodsFromLegacy(body);
+  if (!legacy.length) throw new Error("Selecione ao menos um método aplicável");
+  return legacy;
 }
 
-
-function sanitizePreferredStorageMethod(body: any): StorageMethod | null {
-  const preferred = typeof body.preferredStorageMethod === "string" ? body.preferredStorageMethod.trim() : "";
+function sanitizePreferredStorageMethod(body: any, enabledMethods: string[]): string {
+  const preferred = typeof body.preferredStorageMethod === "string" ? body.preferredStorageMethod.trim().toUpperCase() : "";
   if (!preferred) {
     throw new Error("Método principal é obrigatório");
   }
-  if (!STORAGE_METHODS.includes(preferred as StorageMethod)) throw new Error("Método preferencial inválido");
-  const enabled = enabledMethodsFromBody(body);
-  if (!enabled.includes(preferred as StorageMethod)) throw new Error("Método preferencial precisa estar habilitado");
-  return preferred as StorageMethod;
+  if (!enabledMethods.includes(preferred)) throw new Error("Método principal precisa estar habilitado");
+  return preferred;
+}
+
+function legacyFlagsFromSelected(selectedMethods: string[]) {
+  return {
+    methodQuente: selectedMethods.includes("QUENTE"),
+    methodPistaFria: selectedMethods.includes("PISTA FRIA"),
+    methodDescongelando: selectedMethods.includes("DESCONGELANDO"),
+    methodResfriado: selectedMethods.includes("RESFRIADO") || selectedMethods.includes("FRIO"),
+    methodCongelado: selectedMethods.includes("CONGELADO"),
+    methodAmbienteSecos: selectedMethods.includes("AMBIENTE") || selectedMethods.includes("AMBIENTE SECOS"),
+  };
 }
 
 export async function GET(req: Request) {
@@ -54,13 +77,16 @@ export async function POST(req: Request) {
   if (session.user.role !== "ADMIN") return NextResponse.json({ error: "forbidden" }, { status: 403 });
 
   const body = await req.json();
-  let preferredStorageMethod: StorageMethod | null;
+  let selectedMethods: string[];
+  let preferredStorageMethod: string;
   try {
-    ensureAtLeastOneEnabledMethod(body);
-    preferredStorageMethod = sanitizePreferredStorageMethod(body);
+    selectedMethods = sanitizeSelectedMethods(body);
+    preferredStorageMethod = sanitizePreferredStorageMethod(body, selectedMethods);
   } catch (error: any) {
     return NextResponse.json({ error: error?.message || "Dados inválidos" }, { status: 400 });
   }
+
+  const flags = legacyFlagsFromSelected(selectedMethods);
 
   const created = await prisma.item.create({
     data: {
@@ -76,12 +102,8 @@ export async function POST(req: Request) {
       ambientHours: body.ambientHours,
       hotHours: body.hotHours,
       thawingHours: body.thawingHours,
-      methodQuente: Boolean(body.methodQuente),
-      methodPistaFria: Boolean(body.methodPistaFria),
-      methodDescongelando: Boolean(body.methodDescongelando),
-      methodResfriado: Boolean(body.methodResfriado),
-      methodCongelado: Boolean(body.methodCongelado),
-      methodAmbienteSecos: Boolean(body.methodAmbienteSecos),
+      ...flags,
+      selectedMethods,
       preferredStorageMethod,
     },
     include: { group: true },

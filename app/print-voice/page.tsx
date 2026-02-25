@@ -115,7 +115,6 @@ export default function PrintVoicePage() {
 
   return (
     <>
-      <h1>Voz IA</h1>
       <div className="card grid">
         <p style={{ margin: 0 }}>
           <span style={{ fontWeight: 700 }}>Fale seu pedido.</span><br />

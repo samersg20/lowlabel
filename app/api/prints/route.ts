@@ -5,6 +5,17 @@ import { STORAGE_METHOD_RULES } from "@/lib/constants";
 import { submitRawZplToPrintNode } from "@/lib/printnode";
 import { makeZplLabel } from "@/lib/zpl";
 
+function legacyMethods(item: any) {
+  const methods: string[] = [];
+  if (item.methodQuente) methods.push("QUENTE");
+  if (item.methodPistaFria) methods.push("PISTA FRIA");
+  if (item.methodDescongelando) methods.push("DESCONGELANDO");
+  if (item.methodResfriado) methods.push("RESFRIADO");
+  if (item.methodCongelado) methods.push("CONGELADO");
+  if (item.methodAmbienteSecos) methods.push("AMBIENTE");
+  return methods;
+}
+
 export async function POST(req: Request) {
   try {
     const session = await auth();
@@ -20,18 +31,34 @@ export async function POST(req: Request) {
     const item = await prisma.item.findFirst({ where: { id: body.itemId, tenantId: session.user.tenantId } });
     if (!item) return NextResponse.json({ error: "Item não encontrado" }, { status: 404 });
 
-    const methodRule = STORAGE_METHOD_RULES[body.storageMethod as keyof typeof STORAGE_METHOD_RULES];
-    if (!methodRule) return NextResponse.json({ error: "Método inválido" }, { status: 400 });
+    const selectedMethods = (Array.isArray(item.selectedMethods) && item.selectedMethods.length
+      ? item.selectedMethods
+      : legacyMethods(item)).map((m: string) => String(m || "").trim().toUpperCase());
+
+    const requestedMethod = String(body.storageMethod || "").trim().toUpperCase();
+    if (!selectedMethods.includes(requestedMethod)) {
+      return NextResponse.json({ error: "Método não habilitado para este item" }, { status: 400 });
+    }
+
+    const methodConfig = await prisma.method.findFirst({
+      where: { tenantId: session.user.tenantId, name: requestedMethod },
+      select: { durationValue: true, durationUnit: true },
+    });
+
+    const fallback = STORAGE_METHOD_RULES[requestedMethod as keyof typeof STORAGE_METHOD_RULES];
+    if (!methodConfig && !fallback) return NextResponse.json({ error: "Método inválido" }, { status: 400 });
 
     const producedAt = new Date();
-    const multiplier = methodRule.unit === "hours" ? 60 * 60 * 1000 : 24 * 60 * 60 * 1000;
-    const expiresAt = new Date(producedAt.getTime() + methodRule.amount * multiplier);
+    const amount = methodConfig?.durationValue ?? fallback!.amount;
+    const unit = methodConfig?.durationUnit ?? fallback!.unit;
+    const multiplier = unit === "hours" ? 60 * 60 * 1000 : 24 * 60 * 60 * 1000;
+    const expiresAt = new Date(producedAt.getTime() + amount * multiplier);
 
     const print = await prisma.labelPrint.create({
       data: {
         tenantId: session.user.tenantId,
         itemId: item.id,
-        storageMethod: body.storageMethod,
+        storageMethod: requestedMethod as any,
         producedAt,
         expiresAt,
         userId: session.user.id,
@@ -39,7 +66,7 @@ export async function POST(req: Request) {
       },
     });
 
-    const zpl = makeZplLabel({ name: item.name, storageMethod: body.storageMethod, producedAt, expiresAt, userName: session.user.name || "ADMIN", sif: item.sif });
+    const zpl = makeZplLabel({ name: item.name, storageMethod: requestedMethod as any, producedAt, expiresAt, userName: session.user.name || "ADMIN", sif: item.sif });
 
     const printerConfig = await prisma.printerConfig.findFirst({ where: { tenantId: session.user.tenantId, unit: session.user.unit, isActive: true } });
 

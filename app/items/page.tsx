@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 type Group = { id: string; name: string };
 type Method = { id: number; name: string };
@@ -11,6 +11,7 @@ type Item = {
   group?: Group | null;
   sif?: string | null;
   preferredStorageMethod?: string | null;
+  selectedMethods?: string[];
   methodQuente?: boolean;
   methodPistaFria?: boolean;
   methodDescongelando?: boolean;
@@ -24,12 +25,7 @@ type ItemForm = {
   groupId: string;
   sif: string;
   preferredStorageMethod: string;
-  methodQuente: boolean;
-  methodPistaFria: boolean;
-  methodDescongelando: boolean;
-  methodResfriado: boolean;
-  methodCongelado: boolean;
-  methodAmbienteSecos: boolean;
+  selectedMethods: string[];
 };
 
 const empty: ItemForm = {
@@ -37,27 +33,22 @@ const empty: ItemForm = {
   groupId: "",
   sif: "",
   preferredStorageMethod: "",
-  methodQuente: false,
-  methodPistaFria: false,
-  methodDescongelando: false,
-  methodResfriado: false,
-  methodCongelado: false,
-  methodAmbienteSecos: false,
-};
-
-const methodFieldByLabel: Record<string, keyof ItemForm> = {
-  QUENTE: "methodQuente",
-  "PISTA FRIA": "methodPistaFria",
-  DESCONGELANDO: "methodDescongelando",
-  RESFRIADO: "methodResfriado",
-  CONGELADO: "methodCongelado",
-  AMBIENTE: "methodAmbienteSecos",
+  selectedMethods: [],
 };
 
 function toMethodLabel(name: string) {
-  const normalized = String(name || "").trim().toUpperCase();
-  if (normalized === "AMBIENTE SECOS") return "AMBIENTE";
-  return normalized;
+  return String(name || "").trim().toUpperCase();
+}
+
+function legacyMethods(item: Item) {
+  const methods: string[] = [];
+  if (item.methodQuente) methods.push("QUENTE");
+  if (item.methodPistaFria) methods.push("PISTA FRIA");
+  if (item.methodDescongelando) methods.push("DESCONGELANDO");
+  if (item.methodResfriado) methods.push("RESFRIADO");
+  if (item.methodCongelado) methods.push("CONGELADO");
+  if (item.methodAmbienteSecos) methods.push("AMBIENTE");
+  return methods;
 }
 
 export default function ItemsPage() {
@@ -73,7 +64,10 @@ export default function ItemsPage() {
   const [methodsOpen, setMethodsOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-  const availableMethods = methods.map((m) => toMethodLabel(m.name)).filter((name, idx, arr) => arr.indexOf(name) === idx);
+  const availableMethods = useMemo(
+    () => methods.map((m) => toMethodLabel(m.name)).filter((name, idx, arr) => arr.indexOf(name) === idx),
+    [methods],
+  );
 
   async function loadGroups() {
     const res = await fetch("/api/groups");
@@ -101,7 +95,7 @@ export default function ItemsPage() {
   }, [groupFilter]);
 
   function checkedMethodsCount(currentForm: ItemForm) {
-    return Object.values(methodFieldByLabel).reduce((sum, field) => sum + (currentForm[field] ? 1 : 0), 0);
+    return currentForm.selectedMethods.length;
   }
 
   async function submit(e: React.FormEvent) {
@@ -118,11 +112,17 @@ export default function ItemsPage() {
       return;
     }
 
+    if (!form.selectedMethods.includes(form.preferredStorageMethod)) {
+      setError("Método principal precisa estar entre os métodos aplicáveis.");
+      return;
+    }
+
     const payload = {
       ...form,
       groupId: form.groupId || null,
       notes: null,
       preferredStorageMethod: form.preferredStorageMethod || null,
+      selectedMethods: form.selectedMethods,
     };
 
     const res = await fetch(`/api/items${editingId ? `/${editingId}` : ""}`, {
@@ -148,6 +148,8 @@ export default function ItemsPage() {
   }
 
   function startEdit(item: Item) {
+    const selectedMethods = (item.selectedMethods && item.selectedMethods.length ? item.selectedMethods : legacyMethods(item)).map(toMethodLabel);
+
     setEditingId(item.id);
     setForm({
       ...empty,
@@ -155,32 +157,28 @@ export default function ItemsPage() {
       groupId: item.groupId ?? "",
       sif: item.sif ?? "",
       preferredStorageMethod: toMethodLabel(item.preferredStorageMethod ?? ""),
-      methodQuente: Boolean(item.methodQuente),
-      methodPistaFria: Boolean(item.methodPistaFria),
-      methodDescongelando: Boolean(item.methodDescongelando),
-      methodResfriado: Boolean(item.methodResfriado),
-      methodCongelado: Boolean(item.methodCongelado),
-      methodAmbienteSecos: Boolean(item.methodAmbienteSecos),
+      selectedMethods,
     });
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   function enabledMethods(item: Item) {
-    const active = availableMethods.filter((label) => item[methodFieldByLabel[label]]);
+    const active = (item.selectedMethods && item.selectedMethods.length ? item.selectedMethods : legacyMethods(item)).map(toMethodLabel);
     return active.length ? active.join(", ") : "-";
   }
 
   function toggleMethod(method: string) {
-    const field = methodFieldByLabel[method];
-    if (!field) return;
+    const normalized = toMethodLabel(method);
+    const exists = form.selectedMethods.includes(normalized);
+    const selectedMethods = exists
+      ? form.selectedMethods.filter((m) => m !== normalized)
+      : [...form.selectedMethods, normalized];
 
-    const next = { ...form, [field]: !form[field] };
+    const preferredStorageMethod = selectedMethods.includes(form.preferredStorageMethod)
+      ? form.preferredStorageMethod
+      : "";
 
-    if (next.preferredStorageMethod && !next[methodFieldByLabel[next.preferredStorageMethod]]) {
-      next.preferredStorageMethod = "";
-    }
-
-    setForm(next);
+    setForm({ ...form, selectedMethods, preferredStorageMethod });
   }
 
   async function exportItems() {
@@ -215,7 +213,7 @@ export default function ItemsPage() {
     load();
   }
 
-  const enabledOptions = availableMethods.filter((method) => Boolean(form[methodFieldByLabel[method]]));
+  const enabledOptions = availableMethods.filter((method) => form.selectedMethods.includes(method));
 
   return (
     <>
@@ -271,8 +269,7 @@ export default function ItemsPage() {
               {methodsOpen && (
                 <div className="method-multiselect-panel">
                   {availableMethods.map((method) => {
-                    const field = methodFieldByLabel[method];
-                    const selected = Boolean(form[field]);
+                    const selected = form.selectedMethods.includes(method);
                     return (
                       <label key={method} className="method-multiselect-option">
                         <input

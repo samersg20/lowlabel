@@ -12,6 +12,7 @@ type Item = {
   methodResfriado?: boolean;
   methodCongelado?: boolean;
   methodAmbienteSecos?: boolean;
+  selectedMethods?: string[];
 };
 
 export default function PrintPage() {
@@ -35,6 +36,15 @@ export default function PrintPage() {
 
   const availableMethods = useMemo(() => {
     if (!selectedItem) return [] as string[];
+
+    const dynamic = Array.isArray(selectedItem.selectedMethods)
+      ? selectedItem.selectedMethods.map((m) => String(m || "").trim().toUpperCase()).filter(Boolean)
+      : [];
+
+    if (dynamic.length) {
+      return Array.from(new Set(dynamic));
+    }
+
     return STORAGE_METHODS.filter((m) => {
       if (m === "QUENTE") return Boolean(selectedItem.methodQuente);
       if (m === "PISTA FRIA") return Boolean(selectedItem.methodPistaFria);
@@ -96,7 +106,6 @@ export default function PrintPage() {
 
   return (
     <>
-      <h1>Tradicional</h1>
       <div className="card grid grid-2">
         <label>
           Item
@@ -113,18 +122,16 @@ export default function PrintPage() {
         </label>
 
         <div>
-          <label>Quantidade</label>
+          <label>Quantidade Mín:1 Máx 20</label>
           <div className="qty-control">
             <button type="button" className="qty-btn" onClick={() => changeQuantity(1)}>+</button>
             <div className="qty-value">{quantity}</div>
             <button type="button" className="qty-btn" onClick={() => changeQuantity(-1)}>−</button>
           </div>
-          <p style={{ margin: "8px 0 0", color: "#6a7380", fontSize: 14 }}>Mínimo: 1, Máximo: 20</p>
         </div>
 
         <div className="print-submit-wrap">
           <button type="button" onClick={onPrint} className="print-submit">IMPRIMIR</button>
-          <p className="print-align-helper">Mínimo: 1, Máximo: 20</p>
         </div>
       </div>
 

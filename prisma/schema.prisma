@@ -79,6 +79,7 @@ model Item {
   methodResfriado     Boolean @default(false)
   methodCongelado     Boolean @default(false)
   methodAmbienteSecos Boolean @default(false)
+  selectedMethods     String[] @default([])
   preferredStorageMethod String?
   prints       LabelPrint[]
   createdAt    DateTime    @default(now())
