@@ -137,6 +137,8 @@ button.danger { background: #9f1027; }
 }
 .nav-dropdown-menu a:hover { background: #eef4f8; }
 
+.nav-dropdown-menu a { font-weight: 700; }
+
 .nav-emit-dropdown .nav-dropdown-trigger {
   background: #f0c52a;
   border-color: #d2a711;

@@ -49,8 +49,8 @@ export function Nav() {
           {openEmitir && (
             <div className="nav-dropdown-menu">
               <Link href="/print">Escolher</Link>
-              <Link href="/print-easy">Digitar</Link>
-              <Link href="/print-voice">Falar</Link>
+              <Link href="/print-easy">Digitar (IA)</Link>
+              <Link href="/print-voice">Falar (IA)</Link>
             </div>
           )}
         </div>
