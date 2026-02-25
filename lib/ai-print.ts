@@ -50,8 +50,8 @@ async function parseWithOpenAI(input: string, items: Array<{ id: string; name: s
       Authorization: `Bearer ${apiKey}`,
     },
     body: JSON.stringify({
-      model,
-      temperature: 0.1,
+      model: model.trim(),
+      model.trim().startsWith('o') ? 1 : 0.1,
       response_format: { type: "json_object" },
       messages: [
         {
