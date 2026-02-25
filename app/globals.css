@@ -81,6 +81,17 @@ button.print-submit { background: #28A745; color: #fff; }
   background: #fff;
 }
 
+.print-submit-wrap {
+  width: 100%;
+  max-width: 520px;
+  align-self: end;
+}
+
+.print-submit-wrap .print-submit {
+  width: 100%;
+  min-height: 64px;
+}
+
 @media (max-width: 900px) {
   .grid-3 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .method-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -100,6 +111,8 @@ button.print-submit { background: #28A745; color: #fff; }
   .qty-control { grid-template-columns: 64px 1fr 64px; }
   .qty-btn { min-height: 56px; font-size: 34px; }
   .qty-value { font-size: 40px; }
+  .print-submit-wrap { max-width: none; }
+  .print-submit-wrap .print-submit { min-height: 56px; }
   h1 { font-size: 32px; margin: 0 0 12px; }
 }
 

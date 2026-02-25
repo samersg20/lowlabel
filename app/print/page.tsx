@@ -122,7 +122,9 @@ export default function PrintPage() {
           <p style={{ margin: "8px 0 0", color: "#6a7380", fontSize: 14 }}>Mínimo: 1, Máximo: 20</p>
         </div>
 
-        <button type="button" onClick={onPrint} className="print-submit">IMPRIMIR</button>
+        <div className="print-submit-wrap">
+          <button type="button" onClick={onPrint} className="print-submit">IMPRIMIR</button>
+        </div>
       </div>
 
       {error && <div className="card" style={{ color: "#b00020" }}>{error}</div>}
