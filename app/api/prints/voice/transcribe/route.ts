@@ -12,9 +12,15 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Arquivo de áudio é obrigatório" }, { status: 400 });
     }
 
-    const apiKey = process.env.GROQ_API_KEY || process.env.GROQ_APIKEY || process.env.GROQ_VOICE_API_KEY;
+    const apiKey = process.env.GROQ_API_KEY || process.env.GROQ_APIKEY || process.env.GROQ_VOICE_API_KEY || "";
+    const orgId = process.env.GROQ_ORG_ID || "";
+
     if (!apiKey) {
-      return NextResponse.json({ error: "GROQ_API_KEY não configurada (ou GROQ_APIKEY/GROQ_VOICE_API_KEY)" }, { status: 500 });
+      return NextResponse.json({ error: "Configure GROQ_API_KEY (não use GROQ_ORG_ID como chave da API)." }, { status: 500 });
+    }
+
+    if (apiKey === orgId || /^org_/i.test(apiKey)) {
+      return NextResponse.json({ error: "Chave inválida: GROQ_ORG_ID identifica a organização e não funciona como API key. Use GROQ_API_KEY." }, { status: 400 });
     }
 
     const payload = new FormData();
@@ -30,7 +36,13 @@ export async function POST(req: Request) {
     });
 
     const data = await groqRes.json().catch(() => ({}));
-    if (!groqRes.ok) return NextResponse.json({ error: data?.error?.message || "Falha na transcrição" }, { status: 400 });
+    if (!groqRes.ok) {
+      const message = String(data?.error?.message || "Falha na transcrição");
+      if (groqRes.status === 401 || /invalid api key/i.test(message)) {
+        return NextResponse.json({ error: "Invalid API Key. Use GROQ_API_KEY válida (GROQ_ORG_ID não é chave de API)." }, { status: 401 });
+      }
+      return NextResponse.json({ error: message }, { status: 400 });
+    }
 
     return NextResponse.json({ text: String(data.text || "").trim(), model: "whisper-large-v3-turbo" });
   } catch (error: any) {

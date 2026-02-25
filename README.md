@@ -102,6 +102,7 @@ Checklist rápido:
   - `GEMINI_API_KEY`
   - `GEMINI_MODEL` (opcional para DIGITAR; padrão `gemini-1.5-flash`)
   - `GROQ_API_KEY (ou GROQ_VOICE_API_KEY)` para transcrição de voz com Groq Whisper (`whisper-large-v3-turbo`)
+- `GROQ_ORG_ID` é apenas identificador da organização e **não** deve ser usado no header Authorization.
   - FALAR usa Gemini `gemini-3-flash-preview` para interpretação do texto transcrito.
 
 ## Fluxo de impressão
