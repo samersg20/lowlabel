@@ -133,8 +133,8 @@ export default function PrintVoicePage() {
       <h1>Falar</h1>
       <div className="card grid">
         <p style={{ margin: 0 }}>
-          <span style={{ fontWeight: 700 }}>Fale seu pedido. Vamos organizar em linhas (QTD / ITEM / MÉTODO).</span><br />
-          <span style={{ color: "#5b6774", fontSize: 13 }}>Máximo 10 etiquetas por requisição. Se estiver de acordo com a sugestão clique imprimir.</span>
+          <span style={{ fontWeight: 700 }}>Fale seu pedido.</span><br />
+          <span style={{ color: "#5b6774", fontSize: 13 }}>Vamos organizar em linhas (QTD / ITEM / MÉTODO).</span>
         </p>
         <textarea
           rows={6}
@@ -150,13 +150,16 @@ export default function PrintVoicePage() {
           <button type="button" onClick={startVoiceCapture} disabled={!canRecord || listening || loading}>
             {listening ? "Ouvindo..." : "Gravar voz"}
           </button>
-          <button type="button" onClick={onSubmit} disabled={loading || !canPrint} className={!canPrint ? "secondary" : ""}>
+          <button type="button" onClick={onSubmit} disabled={loading || !canPrint} className={!canPrint ? "secondary" : "print-submit"}>
             {loading ? "Processando..." : "Imprimir"}
           </button>
           <button type="button" className="secondary" onClick={onClear} disabled={loading}>
             Limpar
           </button>
         </div>
+        <p style={{ margin: 0, color: "#5b6774", fontSize: 13 }}>
+          Clique em gravar voz, se estiver de acordo com a sugestão clique Imprimir. Máximo 10 etiquetas por requisição.
+        </p>
       </div>
       {error && <div className="card" style={{ color: "#b00020" }}>{error}</div>}
       {message && <div className="card" style={{ color: "#0a7a00" }}>{message}</div>}

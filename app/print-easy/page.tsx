@@ -68,8 +68,8 @@ export default function PrintEasyPage() {
       <h1>Digitar</h1>
       <div className="card grid">
         <p style={{ margin: 0 }}>
-          <span style={{ fontWeight: 700 }}>Escreva seu pedido. Vamos organizar em linhas (QTD / ITEM / MÉTODO).</span><br />
-          <span style={{ color: "#5b6774", fontSize: 13 }}>Máximo 10 etiquetas por requisição. Se estiver de acordo com a sugestão clique imprimir.</span>
+          <span style={{ fontWeight: 700 }}>Escreva seu pedido.</span><br />
+          <span style={{ color: "#5b6774", fontSize: 13 }}>Vamos organizar em linhas (QTD / ITEM / MÉTODO).</span>
         </p>
         <textarea
           rows={6}
@@ -83,15 +83,18 @@ export default function PrintEasyPage() {
 
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
           <button type="button" onClick={onInterpret} disabled={loading || !input.trim()}>
-            {loading ? "Processando..." : "Interpretar"}
+            {loading ? "Processando..." : "Processar"}
           </button>
-          <button type="button" onClick={onPrint} disabled={loading || !canPrint} className={!canPrint ? "secondary" : ""}>
+          <button type="button" onClick={onPrint} disabled={loading || !canPrint} className={!canPrint ? "secondary" : "print-submit"}>
             {loading ? "Processando..." : "Imprimir"}
           </button>
           <button type="button" className="secondary" onClick={onClear} disabled={loading}>
             Limpar
           </button>
         </div>
+        <p style={{ margin: 0, color: "#5b6774", fontSize: 13 }}>
+          Após escrever clique em Processar, se estiver de acordo com a sugestão clique Imprimir. Máximo 10 etiquetas por requisição.
+        </p>
       </div>
       {error && <div className="card" style={{ color: "#b00020" }}>{error}</div>}
       {message && <div className="card" style={{ color: "#0a7a00" }}>{message}</div>}
