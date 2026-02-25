@@ -96,7 +96,7 @@ export default function PrintPage() {
 
   return (
     <>
-      <h1>Tradicional</h1>
+      <h1>Escolher</h1>
       <div className="card grid grid-2">
         <label>
           Item

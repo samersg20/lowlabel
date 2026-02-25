@@ -2,7 +2,7 @@ import { auth } from "@/lib/auth";
 import { parseAiPrintOrder } from "@/lib/ai-print";
 import { NextResponse } from "next/server";
 
-const VOICE_GEMINI_MODEL = "gemini-3-flash-preview";
+const VOICE_GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-3-flash-preview";
 
 export async function POST(req: Request) {
   try {
@@ -13,7 +13,7 @@ export async function POST(req: Request) {
     const input = String(body.input || "").trim();
     if (!input) return NextResponse.json({ error: "Texto da voz é obrigatório" }, { status: 400 });
 
-    const parsed = await parseAiPrintOrder({ input, model: VOICE_GEMINI_MODEL, maxQuantity: 10, tenantId: session.user.tenantId });
+    const parsed = await parseAiPrintOrder({ input, model: VOICE_GEMINI_MODEL, maxQuantity: 10 });
 
     return NextResponse.json({
       ok: true,
