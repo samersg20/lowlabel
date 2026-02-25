@@ -51,7 +51,7 @@ async function parseWithOpenAI(input: string, items: Array<{ id: string; name: s
     },
     body: JSON.stringify({
       model: model.trim(),
-      model.trim().startsWith('o') ? 1 : 0.1,
+      temperature: model.trim().startsWith('o') ? 1 : 0.1,
       response_format: { type: "json_object" },
       messages: [
         {
