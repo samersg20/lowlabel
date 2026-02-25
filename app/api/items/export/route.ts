@@ -8,10 +8,10 @@ export async function GET() {
   if (!session?.user) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   if (session.user.role !== "ADMIN") return NextResponse.json({ error: "forbidden" }, { status: 403 });
 
-  const methods = await prisma.method.findMany({ orderBy: { id: "asc" } });
+  const methods = await prisma.method.findMany({ where: { tenantId: session.user.tenantId }, orderBy: { id: "asc" } });
   const methodCode = new Map(methods.map((m) => [m.name, String(m.id)]));
 
-  const items = await prisma.item.findMany({ include: { group: true }, orderBy: { name: "asc" } });
+  const items = await prisma.item.findMany({ where: { tenantId: session.user.tenantId }, include: { group: true }, orderBy: { name: "asc" } });
   const rows = items.map((item) => ({
     name: item.name,
     group: item.group?.name || "",

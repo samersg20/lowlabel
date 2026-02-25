@@ -101,7 +101,7 @@ Checklist rápido:
 - Configure no ambiente:
   - `GEMINI_API_KEY`
   - `GEMINI_MODEL` (opcional para DIGITAR; padrão `gemini-1.5-flash`)
-  - `GROQ_API_KEY` para transcrição de voz com Groq Whisper (`whisper-large-v3-turbo`)
+  - `GROQ_API_KEY (ou GROQ_VOICE_API_KEY)` para transcrição de voz com Groq Whisper (`whisper-large-v3-turbo`)
   - FALAR usa Gemini `gemini-3-flash-preview` para interpretação do texto transcrito.
 
 ## Fluxo de impressão
@@ -121,7 +121,7 @@ Checklist rápido:
 - O backend usa autenticação Basic (`apiKey:`) e envia conteúdo `raw_base64` para o endpoint oficial do PrintNode.
 
 ## Observações
-- Métodos suportados: QUENTE (3h), PISTA FRIA (3h), DESCONGELANDO (3 dias), RESFRIADO (3 dias), CONGELADO (30 dias), AMBIENTE SECOS (30 dias).
+- Métodos suportados: QUENTE (3h), PISTA FRIA (3h), DESCONGELANDO (3 dias), RESFRIADO (3 dias), CONGELADO (30 dias), AMBIENTE (30 dias).
 - Se um método não estiver marcado no item, ele não aparece na tela de emissão.
 - Módulo Emitir (`/print`) limitado entre 1 e 20.
 - Módulos Digitar e Falar limitados entre 1 e 10 por item interpretado.

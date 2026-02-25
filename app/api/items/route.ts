@@ -11,13 +11,21 @@ function enabledMethodsFromBody(body: any): StorageMethod[] {
   if (Boolean(body.methodDescongelando)) methods.push("DESCONGELANDO");
   if (Boolean(body.methodResfriado)) methods.push("RESFRIADO");
   if (Boolean(body.methodCongelado)) methods.push("CONGELADO");
-  if (Boolean(body.methodAmbienteSecos)) methods.push("AMBIENTE SECOS");
+  if (Boolean(body.methodAmbienteSecos)) methods.push("AMBIENTE");
   return methods;
 }
 
+function ensureAtLeastOneEnabledMethod(body: any) {
+  const enabled = enabledMethodsFromBody(body);
+  if (!enabled.length) throw new Error("Selecione ao menos um método aplicável");
+}
+
+
 function sanitizePreferredStorageMethod(body: any): StorageMethod | null {
   const preferred = typeof body.preferredStorageMethod === "string" ? body.preferredStorageMethod.trim() : "";
-  if (!preferred) return null;
+  if (!preferred) {
+    throw new Error("Método principal é obrigatório");
+  }
   if (!STORAGE_METHODS.includes(preferred as StorageMethod)) throw new Error("Método preferencial inválido");
   const enabled = enabledMethodsFromBody(body);
   if (!enabled.includes(preferred as StorageMethod)) throw new Error("Método preferencial precisa estar habilitado");
@@ -48,6 +56,7 @@ export async function POST(req: Request) {
   const body = await req.json();
   let preferredStorageMethod: StorageMethod | null;
   try {
+    ensureAtLeastOneEnabledMethod(body);
     preferredStorageMethod = sanitizePreferredStorageMethod(body);
   } catch (error: any) {
     return NextResponse.json({ error: error?.message || "Dados inválidos" }, { status: 400 });

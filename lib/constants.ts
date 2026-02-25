@@ -4,7 +4,7 @@ export const STORAGE_METHODS = [
   "DESCONGELANDO",
   "RESFRIADO",
   "CONGELADO",
-  "AMBIENTE SECOS",
+  "AMBIENTE",
 ] as const;
 
 export type StorageMethod = (typeof STORAGE_METHODS)[number];
@@ -15,5 +15,5 @@ export const STORAGE_METHOD_RULES: Record<StorageMethod, { amount: number; unit:
   DESCONGELANDO: { amount: 3, unit: "days" },
   RESFRIADO: { amount: 3, unit: "days" },
   CONGELADO: { amount: 30, unit: "days" },
-  "AMBIENTE SECOS": { amount: 30, unit: "days" },
+  "AMBIENTE": { amount: 30, unit: "days" },
 };

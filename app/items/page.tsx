@@ -1,9 +1,9 @@
 "use client";
 
-import { STORAGE_METHODS } from "@/lib/constants";
 import { useEffect, useRef, useState } from "react";
 
 type Group = { id: string; name: string };
+type Method = { id: number; name: string };
 type Item = {
   id: string;
   name: string;
@@ -19,7 +19,20 @@ type Item = {
   methodAmbienteSecos?: boolean;
 };
 
-const empty = {
+type ItemForm = {
+  name: string;
+  groupId: string;
+  sif: string;
+  preferredStorageMethod: string;
+  methodQuente: boolean;
+  methodPistaFria: boolean;
+  methodDescongelando: boolean;
+  methodResfriado: boolean;
+  methodCongelado: boolean;
+  methodAmbienteSecos: boolean;
+};
+
+const empty: ItemForm = {
   name: "",
   groupId: "",
   sif: "",
@@ -32,29 +45,43 @@ const empty = {
   methodAmbienteSecos: false,
 };
 
-const methodFieldByLabel: Record<string, keyof typeof empty> = {
+const methodFieldByLabel: Record<string, keyof ItemForm> = {
   QUENTE: "methodQuente",
   "PISTA FRIA": "methodPistaFria",
   DESCONGELANDO: "methodDescongelando",
   RESFRIADO: "methodResfriado",
   CONGELADO: "methodCongelado",
-  "AMBIENTE SECOS": "methodAmbienteSecos",
+  AMBIENTE: "methodAmbienteSecos",
 };
+
+function toMethodLabel(name: string) {
+  const normalized = String(name || "").trim().toUpperCase();
+  if (normalized === "AMBIENTE SECOS") return "AMBIENTE";
+  return normalized;
+}
 
 export default function ItemsPage() {
   const [items, setItems] = useState<Item[]>([]);
   const [groups, setGroups] = useState<Group[]>([]);
+  const [methods, setMethods] = useState<Method[]>([]);
   const [groupFilter, setGroupFilter] = useState("");
-  const [form, setForm] = useState<any>(empty);
+  const [form, setForm] = useState<ItemForm>(empty);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [error, setError] = useState("");
   const [importMessage, setImportMessage] = useState("");
   const [importError, setImportError] = useState("");
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
+  const availableMethods = methods.map((m) => toMethodLabel(m.name)).filter((name, idx, arr) => arr.indexOf(name) === idx);
+
   async function loadGroups() {
     const res = await fetch("/api/groups");
     setGroups(await res.json());
+  }
+
+  async function loadMethods() {
+    const res = await fetch("/api/methods");
+    setMethods(await res.json());
   }
 
   async function load() {
@@ -65,15 +92,31 @@ export default function ItemsPage() {
 
   useEffect(() => {
     loadGroups();
+    loadMethods();
   }, []);
 
   useEffect(() => {
     load();
   }, [groupFilter]);
 
+  function checkedMethodsCount(currentForm: ItemForm) {
+    return Object.values(methodFieldByLabel).reduce((sum, field) => sum + (currentForm[field] ? 1 : 0), 0);
+  }
+
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
+
+    if (checkedMethodsCount(form) < 1) {
+      setError("Selecione pelo menos um método aplicável.");
+      return;
+    }
+
+    if (!form.preferredStorageMethod) {
+      setError("Método principal é obrigatório.");
+      return;
+    }
+
     const payload = {
       ...form,
       groupId: form.groupId || null,
@@ -107,20 +150,29 @@ export default function ItemsPage() {
     setEditingId(item.id);
     setForm({
       ...empty,
-      ...item,
+      name: item.name || "",
       groupId: item.groupId ?? "",
-      preferredStorageMethod: item.preferredStorageMethod ?? "",
+      sif: item.sif ?? "",
+      preferredStorageMethod: toMethodLabel(item.preferredStorageMethod ?? ""),
+      methodQuente: Boolean(item.methodQuente),
+      methodPistaFria: Boolean(item.methodPistaFria),
+      methodDescongelando: Boolean(item.methodDescongelando),
+      methodResfriado: Boolean(item.methodResfriado),
+      methodCongelado: Boolean(item.methodCongelado),
+      methodAmbienteSecos: Boolean(item.methodAmbienteSecos),
     });
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   function enabledMethods(item: Item) {
-    const active = STORAGE_METHODS.filter((label) => item[methodFieldByLabel[label]]);
+    const active = availableMethods.filter((label) => item[methodFieldByLabel[label]]);
     return active.length ? active.join(", ") : "-";
   }
 
   function toggleMethod(method: string) {
     const field = methodFieldByLabel[method];
+    if (!field) return;
+
     const next = { ...form, [field]: !form[field] };
 
     if (next.preferredStorageMethod && !next[methodFieldByLabel[next.preferredStorageMethod]]) {
@@ -162,14 +214,13 @@ export default function ItemsPage() {
     load();
   }
 
-  const enabledOptions = STORAGE_METHODS.filter((method) => Boolean(form[methodFieldByLabel[method]]));
+  const enabledOptions = availableMethods.filter((method) => Boolean(form[methodFieldByLabel[method]]));
 
   return (
     <>
       <h1>Itens</h1>
 
       <div className="card">
-        <h2 style={{ marginTop: 0 }}>Importar / Exportar Itens</h2>
         <p style={{ marginTop: 0 }}>A importação adiciona novos itens e atualiza existentes, sem apagar itens antigos. Use S/N nos métodos e o número do Método Principal conforme o módulo Métodos.</p>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
           <button type="button" className="secondary" onClick={exportItems}>Exportar XLSX</button>
@@ -191,7 +242,6 @@ export default function ItemsPage() {
       </div>
 
       <div className="card">
-        <h2 style={{ marginTop: 0 }}>Cadastrar</h2>
         <form className="grid grid-3" onSubmit={submit}>
           <label>Item<input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value.toUpperCase() })} required /></label>
           <label>Grupo
@@ -205,32 +255,37 @@ export default function ItemsPage() {
           <label>SIF<input placeholder="SIF (opcional)" value={form.sif} onChange={(e) => setForm({ ...form, sif: e.target.value })} /></label>
 
           <div style={{ gridColumn: "1 / -1" }}>
-            <p className="section-label">Métodos aplicáveis</p>
-            <div className="method-grid">
-              {STORAGE_METHODS.map((method) => {
-                const field = methodFieldByLabel[method];
-                const selected = Boolean(form[field]);
-                return (
-                  <button
-                    key={method}
-                    type="button"
-                    className={`method-pill ${selected ? "selected" : ""}`}
-                    onClick={() => toggleMethod(method)}
-                  >
-                    {method}
-                  </button>
-                );
-              })}
-            </div>
+            <p className="section-label">Métodos aplicáveis *</p>
+            <details>
+              <summary style={{ cursor: "pointer", fontWeight: 700 }}>Selecionar métodos ({enabledOptions.length})</summary>
+              <div style={{ display: "grid", gap: 8, marginTop: 8 }}>
+                {availableMethods.map((method) => {
+                  const field = methodFieldByLabel[method];
+                  const selected = Boolean(form[field]);
+                  return (
+                    <label key={method} style={{ display: "flex", alignItems: "center", gap: 8, fontWeight: 500 }}>
+                      <input
+                        type="checkbox"
+                        checked={selected}
+                        onChange={() => toggleMethod(method)}
+                        style={{ width: 18, height: 18 }}
+                      />
+                      {method}
+                    </label>
+                  );
+                })}
+              </div>
+            </details>
           </div>
 
           <label>
-            Método principal
+            Método principal *
             <select
               value={form.preferredStorageMethod}
               onChange={(e) => setForm({ ...form, preferredStorageMethod: e.target.value })}
+              required
             >
-              <option value="">Selecione (opcional)</option>
+              <option value="">Selecione...</option>
               {enabledOptions.map((method) => (
                 <option key={method} value={method}>{method}</option>
               ))}
@@ -266,7 +321,7 @@ export default function ItemsPage() {
                   <td>{item.name}</td>
                   <td>{item.group?.name || "-"}</td>
                   <td>{enabledMethods(item)}</td>
-                  <td>{item.preferredStorageMethod || "-"}</td>
+                  <td>{toMethodLabel(item.preferredStorageMethod || "-")}</td>
                   <td>
                     <button className="secondary" onClick={() => startEdit(item)}>Editar</button>{" "}
                     <button className="danger" onClick={() => remove(item.id)}>Excluir</button>

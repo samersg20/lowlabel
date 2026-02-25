@@ -27,7 +27,7 @@ export default withAuth(
       return NextResponse.json({ error: "forbidden" }, { status: 403 });
     }
 
-    return NextResponse.redirect(new URL("/print", req.url));
+    return NextResponse.redirect(new URL("/", req.url));
   },
   {
     callbacks: {

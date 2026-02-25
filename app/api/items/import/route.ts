@@ -58,9 +58,9 @@ export async function POST(req: Request) {
       .map((row, idx) => ({ row, sheetLine: idx + 2 }))
       .filter(({ row }) => Object.values(row).some((value) => String(value || "").trim() !== ""));
 
-    const groups = await prisma.itemGroup.findMany();
+    const groups = await prisma.itemGroup.findMany({ where: { tenantId: session.user.tenantId } });
     const groupByName = new Map(groups.map((g) => [g.name.trim().toLowerCase(), g]));
-    const methods = await prisma.method.findMany({ orderBy: { id: "asc" } });
+    const methods = await prisma.method.findMany({ where: { tenantId: session.user.tenantId }, orderBy: { id: "asc" } });
     const methodsById = new Map(methods.map((m) => [String(m.id), m.name]));
 
     let created = 0;
@@ -93,20 +93,20 @@ export async function POST(req: Request) {
         DESCONGELANDO: data.methodDescongelando,
         RESFRIADO: data.methodResfriado,
         CONGELADO: data.methodCongelado,
-        "AMBIENTE SECOS": data.methodAmbienteSecos,
+        "AMBIENTE": data.methodAmbienteSecos,
       };
 
       if (data.preferredStorageMethod && !preferredEnabledMap[data.preferredStorageMethod]) {
         throw new Error(`Linha ${sheetLine}: Método Principal deve estar marcado com S`);
       }
 
-      const existing = await prisma.item.findFirst({ where: { name: data.name, groupId: data.groupId } });
+      const existing = await prisma.item.findFirst({ where: { tenantId: session.user.tenantId, name: data.name, groupId: data.groupId } });
 
       if (existing) {
         await prisma.item.update({ where: { id: existing.id }, data: { ...data } });
         updated += 1;
       } else {
-        await prisma.item.create({ data: { ...data, type: "GERAL", itemCode: await generateUniqueItemCode() } });
+        await prisma.item.create({ data: { ...data, tenantId: session.user.tenantId, type: "GERAL", itemCode: await generateUniqueItemCode() } });
         created += 1;
       }
     }

@@ -14,7 +14,7 @@ function enabledMethodsForItem(item: any): StorageMethod[] {
   if (item.methodDescongelando) methods.push("DESCONGELANDO");
   if (item.methodResfriado) methods.push("RESFRIADO");
   if (item.methodCongelado) methods.push("CONGELADO");
-  if (item.methodAmbienteSecos) methods.push("AMBIENTE SECOS");
+  if (item.methodAmbienteSecos) methods.push("AMBIENTE");
   return methods;
 }
 

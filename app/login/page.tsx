@@ -14,14 +14,14 @@ export default function LoginPage() {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    if (data?.user) router.push("/print");
+    if (data?.user) router.push("/");
   }, [data, router]);
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
     const res = await signIn("credentials", { identifier, password, redirect: false });
     if (res?.error) return setError("Credenciais inválidas");
-    router.push("/print");
+    router.push("/");
   }
 
   return (

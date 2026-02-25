@@ -12,9 +12,9 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Arquivo de áudio é obrigatório" }, { status: 400 });
     }
 
-    const apiKey = process.env.GROQ_API_KEY;
+    const apiKey = process.env.GROQ_API_KEY || process.env.GROQ_APIKEY || process.env.GROQ_VOICE_API_KEY;
     if (!apiKey) {
-      return NextResponse.json({ error: "GROQ_API_KEY não configurada" }, { status: 500 });
+      return NextResponse.json({ error: "GROQ_API_KEY não configurada (ou GROQ_APIKEY/GROQ_VOICE_API_KEY)" }, { status: 500 });
     }
 
     const payload = new FormData();

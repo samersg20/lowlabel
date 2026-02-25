@@ -41,7 +41,7 @@ export default function PrintPage() {
       if (m === "DESCONGELANDO") return Boolean(selectedItem.methodDescongelando);
       if (m === "RESFRIADO") return Boolean(selectedItem.methodResfriado);
       if (m === "CONGELADO") return Boolean(selectedItem.methodCongelado);
-      if (m === "AMBIENTE SECOS") return Boolean(selectedItem.methodAmbienteSecos);
+      if (m === "AMBIENTE") return Boolean(selectedItem.methodAmbienteSecos);
       return false;
     });
   }, [selectedItem]);

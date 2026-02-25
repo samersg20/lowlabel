@@ -8,6 +8,18 @@ function normalize(input: unknown) {
   return String(input || "").trim();
 }
 
+function normalizeCnpj(value: string) {
+  return value.replace(/\D/g, "");
+}
+
+function isValidEmail(value: string) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+}
+
+function isValidZipCode(value: string) {
+  return /^\d{5}-?\d{3}$/.test(value);
+}
+
 export async function POST(req: Request) {
   try {
     const body = await req.json();
@@ -17,17 +29,29 @@ export async function POST(req: Request) {
     const password = String(body.password || "");
     const legalName = normalize(body.legalName);
     const tradeName = normalize(body.tradeName);
-    const cnpj = normalize(body.cnpj);
+    const cnpj = normalizeCnpj(normalize(body.cnpj));
     const businessAddress = normalize(body.businessAddress);
     const neighborhood = normalize(body.neighborhood).toUpperCase();
     const city = normalize(body.city);
-    const state = normalize(body.state);
+    const state = normalize(body.state).toUpperCase();
     const zipCode = normalize(body.zipCode);
     const stateRegistration = normalize(body.stateRegistration);
     const printerCount = Math.max(1, Number(body.printerCount || 1));
 
     if (!name || !email || !password || !legalName || !tradeName || !cnpj || !businessAddress || !neighborhood || !city || !state || !zipCode) {
       return NextResponse.json({ error: "Preencha todos os dados obrigatórios do cadastro" }, { status: 400 });
+    }
+
+    if (!isValidEmail(email)) {
+      return NextResponse.json({ error: "E-mail inválido" }, { status: 400 });
+    }
+
+    if (cnpj.length !== 14) {
+      return NextResponse.json({ error: "CNPJ inválido. Informe 14 dígitos" }, { status: 400 });
+    }
+
+    if (!isValidZipCode(zipCode)) {
+      return NextResponse.json({ error: "CEP inválido. Use o formato 00000-000" }, { status: 400 });
     }
 
     if (!isStrongPassword(password)) {
@@ -77,6 +101,17 @@ export async function POST(req: Request) {
           phone: "",
           managerName: name,
         },
+      });
+
+      await tx.method.createMany({
+        data: [
+          { tenantId: tenant.id, name: "QUENTE", durationValue: 3, durationUnit: "hours" },
+          { tenantId: tenant.id, name: "PISTA FRIA", durationValue: 3, durationUnit: "hours" },
+          { tenantId: tenant.id, name: "DESCONGELANDO", durationValue: 3, durationUnit: "days" },
+          { tenantId: tenant.id, name: "RESFRIADO", durationValue: 3, durationUnit: "days" },
+          { tenantId: tenant.id, name: "CONGELADO", durationValue: 30, durationUnit: "days" },
+          { tenantId: tenant.id, name: "AMBIENTE", durationValue: 30, durationUnit: "days" },
+        ],
       });
 
       return { tenant, user };

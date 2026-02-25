@@ -51,7 +51,7 @@ async function main() {
     { name: "DESCONGELANDO", durationValue: 3, durationUnit: "days" },
     { name: "RESFRIADO", durationValue: 3, durationUnit: "days" },
     { name: "CONGELADO", durationValue: 30, durationUnit: "days" },
-    { name: "AMBIENTE SECOS", durationValue: 30, durationUnit: "days" },
+    { name: "AMBIENTE", durationValue: 30, durationUnit: "days" },
   ];
 
   for (const method of methods) await upsertGlobalMethod(method);
