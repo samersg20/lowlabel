@@ -93,6 +93,14 @@ button.print-submit { background: #28A745; color: #fff; }
   min-height: 64px;
 }
 
+.print-align-helper {
+  margin: 8px 0 0;
+  color: #fff;
+  font-size: 14px;
+  line-height: 1.2;
+  user-select: none;
+}
+
 @media (max-width: 900px) {
   .grid-3 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .method-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }

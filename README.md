@@ -27,6 +27,30 @@ npm run dev
 Acesse: `http://localhost:3000`
 
 
+## Stripe (assinatura mensal)
+
+Bibliotecas recomendadas para integração:
+```bash
+npm install stripe @stripe/stripe-js
+```
+
+Variáveis de ambiente (`.env` / `.env.local`):
+```env
+STRIPE_SECRET_KEY="sk_live_..."
+STRIPE_WEBHOOK_SECRET="whsec_..."
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY="pk_live_..."
+STRIPE_PRICE_ID="price_1T4ZR7FxINTwObzGkJuHJQEV"
+STRIPE_PRODUCT_ID="prod_U2ekv7C4TkDdfl"
+NEXT_PUBLIC_APP_URL="https://seu-dominio.com"
+```
+
+Fluxo implementado:
+- `POST /api/checkout`: cria sessão de checkout no modo `subscription` (mensal).
+- `POST /api/stripe/webhook`: escuta `checkout.session.completed`, valida assinatura (`Stripe-Signature`) e extrai `customerId` e `email`.
+- `SubscribeButton`: chama `/api/checkout` e redireciona para o checkout Stripe via `stripe.redirectToCheckout`.
+- Páginas de retorno: `/billing/success` e `/billing/cancel`.
+
+
 ## Troubleshooting `npm install` (HTTP 403)
 Se `npm install` falhar com **403 Forbidden**, geralmente é política de registro/autenticação do ambiente (não erro do código da aplicação).
 

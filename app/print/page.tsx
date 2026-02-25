@@ -124,6 +124,7 @@ export default function PrintPage() {
 
         <div className="print-submit-wrap">
           <button type="button" onClick={onPrint} className="print-submit">IMPRIMIR</button>
+          <p className="print-align-helper">Mínimo: 1, Máximo: 20</p>
         </div>
       </div>
 

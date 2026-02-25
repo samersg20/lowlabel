@@ -5,6 +5,7 @@ import { signIn, useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { FormEvent, useEffect, useState } from "react";
 import { LowLogo } from "@/components/LowLogo";
+import { SubscribeButton } from "@/components/SubscribeButton";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -34,6 +35,9 @@ export default function LoginPage() {
       </form>
       <p style={{ marginTop: 10 }}><Link href="/forgot-password">Esqueci minha senha</Link></p>
       <p style={{ marginTop: 6 }}><Link href="/register">Criar conta</Link></p>
+      <div style={{ marginTop: 10 }}>
+        <SubscribeButton priceId="price_1T4ZR7FxINTwObzGkJuHJQEV" />
+      </div>
       {error && <p style={{ color: "#b00020" }}>{error}</p>}
     </div>
   );
