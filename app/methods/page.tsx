@@ -25,7 +25,7 @@ export default function MethodsPage() {
   return <>
     <h1>Métodos</h1>
     <div className="card"><form className="grid grid-3" onSubmit={submit}>
-      <label>Nome<input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required /></label>
+      <label>Nome<input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value.toUpperCase() })} required /></label>
       <label>Tempo<input type="number" min={1} value={form.durationValue} onChange={(e) => setForm({ ...form, durationValue: Number(e.target.value) })} required /></label>
       <label>Unidade<select value={form.durationUnit} onChange={(e) => setForm({ ...form, durationUnit: e.target.value as any })}><option value="hours">Horas</option><option value="days">Dias</option></select></label>
       <button type="submit">{editing ? "Salvar" : "Criar"}</button>

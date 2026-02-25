@@ -63,7 +63,7 @@ export async function POST(req: Request) {
   const created = await prisma.item.create({
     data: {
       itemCode: await generateUniqueItemCode(),
-      name: body.name,
+      name: String(body.name || "").trim().toUpperCase(),
       type: "GERAL",
       groupId: body.groupId || null,
       sif: body.sif || null,

@@ -55,7 +55,7 @@ export async function submitRawZplToPrintNode(
         title,
         contentType: "raw_base64",
         content,
-        source: "Emissor Etiquetas Low",
+        source: "Etiketi",
       }),
       cache: "no-store",
     });

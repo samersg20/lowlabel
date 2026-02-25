@@ -27,7 +27,7 @@ export default function LoginPage() {
   return (
     <div className="card" style={{ maxWidth: 460, margin: "40px auto", textAlign: "center" }}>
       <LowLogo width={220} />
-      <h1>Emissor Etiquetas</h1>
+      <h1>Etiketi</h1>
       <form className="grid" onSubmit={onSubmit} style={{ textAlign: "left" }}>
         <label>Usuário ou e-mail<input name="identifier" type="text" required value={identifier} onChange={(e) => setIdentifier(e.target.value)} /></label>
         <label>Senha<input name="password" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} /></label>
@@ -35,7 +35,6 @@ export default function LoginPage() {
       </form>
       <p style={{ marginTop: 10 }}><Link href="/forgot-password">Esqueci minha senha</Link></p>
       {error && <p style={{ color: "#b00020" }}>{error}</p>}
-      <p style={{ fontSize: 12 }}>Admin: admin@safelabel.local / admin123</p>
     </div>
   );
 }

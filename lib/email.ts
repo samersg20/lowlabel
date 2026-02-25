@@ -16,7 +16,7 @@ export async function sendResetPasswordEmail(to: string, resetUrl: string) {
     body: JSON.stringify({
       from,
       to: [to],
-      subject: "Recuperação de senha - Emissor Etiquetas Low",
+      subject: "Recuperação de senha - Etiketi",
       html: `<p>Olá,</p><p>Recebemos um pedido para redefinir sua senha.</p><p><a href="${resetUrl}">Clique aqui para criar uma nova senha</a></p><p>Se você não solicitou, ignore este e-mail.</p>`,
     }),
   });

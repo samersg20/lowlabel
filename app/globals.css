@@ -84,7 +84,8 @@ button.print-submit { background: #28A745; color: #fff; }
 .print-submit-wrap {
   width: 100%;
   max-width: 520px;
-  align-self: end;
+  align-self: start;
+  padding-top: 42px;
 }
 
 .print-submit-wrap .print-submit {
@@ -112,6 +113,7 @@ button.print-submit { background: #28A745; color: #fff; }
   .qty-btn { min-height: 56px; font-size: 34px; }
   .qty-value { font-size: 40px; }
   .print-submit-wrap { max-width: none; }
+  .print-submit-wrap { padding-top: 0; }
   .print-submit-wrap .print-submit { min-height: 56px; }
   h1 { font-size: 32px; margin: 0 0 12px; }
 }

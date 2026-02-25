@@ -3,7 +3,7 @@ import { Nav } from "@/components/Nav";
 import { Providers } from "@/components/Providers";
 
 export const metadata = {
-  title: "SafeLabel",
+  title: "Etiketi",
   description: "Etiquetas de segurança alimentar",
 };
 

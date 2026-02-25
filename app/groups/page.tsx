@@ -43,7 +43,7 @@ export default function GroupsPage() {
       <h1>Grupos</h1>
       <div className="card">
         <form onSubmit={submit} className="grid grid-2">
-          <label>Nome do grupo<input value={name} onChange={(e) => setName(e.target.value)} required /></label>
+          <label>Nome do grupo<input value={name} onChange={(e) => setName(e.target.value.toUpperCase())} required /></label>
           <button type="submit">{editingId ? "Salvar grupo" : "Criar grupo"}</button>
         </form>
       </div>

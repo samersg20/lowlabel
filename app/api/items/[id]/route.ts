@@ -46,7 +46,7 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
   const updated = await prisma.item.update({
     where: { id: params.id },
     data: {
-      name: body.name,
+      name: String(body.name || "").trim().toUpperCase(),
       type: "GERAL",
       groupId: body.groupId || null,
       sif: body.sif || null,

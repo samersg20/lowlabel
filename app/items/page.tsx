@@ -193,7 +193,7 @@ export default function ItemsPage() {
       <div className="card">
         <h2 style={{ marginTop: 0 }}>Cadastrar</h2>
         <form className="grid grid-3" onSubmit={submit}>
-          <label>Item<input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required /></label>
+          <label>Item<input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value.toUpperCase() })} required /></label>
           <label>Grupo
             <select value={form.groupId} onChange={(e) => setForm({ ...form, groupId: e.target.value })} required>
               <option value="">Selecione...</option>

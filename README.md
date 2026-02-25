@@ -1,4 +1,4 @@
-# SafeLabel MVP
+# Etiketi MVP
 
 MVP web para etiquetas de segurança alimentar com impressão automática via PrintNode.
 
@@ -42,8 +42,8 @@ Checklist rápido:
 > Neste ambiente de execução, o 403 ocorreu mesmo com registry público e sem `.npmrc`, indicando bloqueio/política externa do ambiente.
 
 ## Usuários seed
-- Admin: `admin` (ou `admin@safelabel.local`) / `admin123`
-- Operador: `operador` (ou `operador@safelabel.local`) / `operador123`
+- Admin: `admin` (ou `admin@etiketi.local`) / `admin123`
+- Operador: `operador` (ou `operador@etiketi.local`) / `operador123`
 
 
 ## Recuperação de senha

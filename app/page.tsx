@@ -8,7 +8,7 @@ export default async function Home() {
   if (!session?.user) {
     return (
       <div className="card" style={{ textAlign: "center" }}>
-        <h1>Bem-vindo ao Emissor Etiquetas</h1>
+        <h1>Bem-vindo ao Etiketi</h1>
         <p>Faça login para acessar o sistema.</p>
       </div>
     );

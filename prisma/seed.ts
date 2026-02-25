@@ -31,8 +31,8 @@ async function main() {
   await prisma.itemGroup.upsert({ where: { name: "Carnes" }, update: {}, create: { name: "Carnes" } });
   await prisma.itemGroup.upsert({ where: { name: "Molhos" }, update: {}, create: { name: "Molhos" } });
 
-  await upsertUser("Admin", "admin", "admin@safelabel.local", "admin123", "ADMIN", "BROOKLIN");
-  await upsertUser("Operador", "operador", "operador@safelabel.local", "operador123", "OPERATOR", "PINHEIROS");
+  await upsertUser("Admin", "admin", "admin@etiketi.local", "admin123", "ADMIN", "BROOKLIN");
+  await upsertUser("Operador", "operador", "operador@etiketi.local", "operador123", "OPERATOR", "PINHEIROS");
 }
 
 main()

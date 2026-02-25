@@ -15,6 +15,6 @@ export async function POST(req: Request) {
   if (!session?.user) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   if (session.user.role !== "ADMIN") return NextResponse.json({ error: "forbidden" }, { status: 403 });
   const body = await req.json();
-  const created = await prisma.itemGroup.create({ data: { name: body.name } });
+  const created = await prisma.itemGroup.create({ data: { name: String(body.name || "").trim().toUpperCase() } });
   return NextResponse.json(created);
 }
