@@ -2,7 +2,7 @@ import { auth } from "@/lib/auth";
 import { processAiPrintOrder } from "@/lib/ai-print";
 import { NextResponse } from "next/server";
 
-const VOICE_GEMINI_MODEL = "gemini-3-flash-preview";
+const AI_TEXT_MODEL = process.env.OPENAI_TEXT_MODEL || "gpt-4o-mini";
 
 export async function POST(req: Request) {
   try {
@@ -16,11 +16,11 @@ export async function POST(req: Request) {
     const results = await processAiPrintOrder({
       input,
       sessionUser: session.user,
-      model: VOICE_GEMINI_MODEL,
+      model: AI_TEXT_MODEL,
       maxQuantity: 10,
     });
 
-    return NextResponse.json({ ok: true, results, model: VOICE_GEMINI_MODEL });
+    return NextResponse.json({ ok: true, results, model: AI_TEXT_MODEL });
   } catch (error: any) {
     return NextResponse.json({ error: error?.message || "Falha ao emitir FALAR" }, { status: 500 });
   }

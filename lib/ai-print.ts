@@ -28,9 +28,9 @@ function pickDefaultMethod(item: any): StorageMethod | null {
   return STORAGE_METHODS.find((m) => enabled.includes(m)) ?? null;
 }
 
-async function parseWithGemini(input: string, items: Array<{ id: string; name: string }>, model: string): Promise<AiOrder[]> {
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) throw new Error("GEMINI_API_KEY não configurada");
+async function parseWithOpenAI(input: string, items: Array<{ id: string; name: string }>, model: string): Promise<AiOrder[]> {
+  const apiKey = process.env.OPENAI_API_KEY;
+  if (!apiKey) throw new Error("OPENAI_API_KEY não configurada");
 
   const prompt = [
     "Você é um parser de pedidos de etiquetas.",
@@ -43,22 +43,33 @@ async function parseWithGemini(input: string, items: Array<{ id: string; name: s
     `Texto do usuário: ${input}`,
   ].join("\n");
 
-  const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
+  const res = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${apiKey}`,
+    },
     body: JSON.stringify({
-      contents: [{ parts: [{ text: prompt }] }],
-      generationConfig: { temperature: 0.1 },
+      model,
+      temperature: 0.1,
+      response_format: { type: "json_object" },
+      messages: [
+        {
+          role: "system",
+          content: "Extraia pedidos de etiquetas em JSON no formato {\"orders\":[{\"itemId\":\"...\",\"quantity\":1}]}",
+        },
+        { role: "user", content: prompt },
+      ],
     }),
   });
 
   if (!res.ok) {
     const txt = await res.text();
-    throw new Error(`Falha na API Gemini: ${txt}`);
+    throw new Error(`Falha na API OpenAI: ${txt}`);
   }
 
   const data = await res.json();
-  const text: string = data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
+  const text: string = data?.choices?.[0]?.message?.content || "";
   const clean = text.replace(/```json|```/g, "").trim();
   const parsed = JSON.parse(clean);
   return Array.isArray(parsed?.orders) ? parsed.orders : [];
@@ -148,7 +159,7 @@ export async function parseAiPrintOrder({
     orderBy: { name: "asc" },
   });
 
-  const aiOrders = await parseWithGemini(input, items.map((i) => ({ id: i.id, name: i.name })), model);
+  const aiOrders = await parseWithOpenAI(input, items.map((i) => ({ id: i.id, name: i.name })), model);
   if (!aiOrders.length) throw new Error("Não consegui identificar itens válidos no texto");
 
   const byId = new Map(items.map((i) => [i.id, i]));

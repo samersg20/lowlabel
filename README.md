@@ -94,19 +94,19 @@ Checklist rápido:
 - Cada item possui `itemCode` de 6 dígitos gerado automaticamente pelo sistema (uso interno); não é necessário preencher na planilha.
 
 
-## Digitar e Falar (IA com Gemini)
+## Digitar e Falar (IA com OpenAI)
 - Acesse `/print-easy` (**Digitar**) para informar pedidos em texto corrido (ex.: `10 brisket 5 cupim 2 pork ribs`).
 - Acesse `/print-voice` (**Falar**) para captar voz no navegador, converter para texto e enviar para interpretação.
-- Os dois módulos processam o conteúdo com Gemini e disparam impressão automaticamente.
+- Os dois módulos processam o conteúdo com OpenAI e disparam impressão automaticamente.
 - Limite dos módulos Digitar/Falar: **1 a 10 etiquetas por item**.
 - Configure no ambiente:
-  - `GEMINI_API_KEY`
-  - `GEMINI_MODEL` (opcional para DIGITAR; padrão `gemini-1.5-flash`)
-  - `GROQ_API_KEY` (com fallback para `GROQ_APIKEY` e `GROQ_VOICE_API_KEY`) para transcrição de voz com Groq Whisper
-- `GROQ_ORG_ID` é apenas identificador da organização e **não** deve ser usado no header Authorization.
-- Endpoint de transcrição usado: `https://api.groq.com/openai/v1/audio/transcriptions`.
-- Modelo de voz suportado neste projeto: `whisper-large-v3-turbo` (Groq também suporta `whisper-large-v3`).
-  - FALAR usa Gemini `gemini-3-flash-preview` para interpretação do texto transcrito.
+  - `OPENAI_API_KEY`
+  - `OPENAI_TEXT_MODEL` (opcional para DIGITAR/FALAR; padrão `gpt-4o-mini`)
+  - `OPENAI_TRANSCRIBE_MODEL` (opcional para transcrição; padrão `gpt-4o-mini-transcribe`)
+- Endpoint de transcrição usado: `https://api.openai.com/v1/audio/transcriptions`.
+- Fluxo atual (unificado):
+  - FALAR usa OpenAI para transcrição do áudio e interpretação do texto.
+  - DIGITAR usa OpenAI para interpretar o texto e montar os pedidos.
 
 ## Fluxo de impressão
 1. Faça login
