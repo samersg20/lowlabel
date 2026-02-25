@@ -209,3 +209,43 @@ button.print-submit { background: #28A745; color: #fff; }
   color: #fff;
 }
 .nav-falar:hover { background: #b94d00; }
+
+.method-multiselect { position: relative; max-width: 420px; }
+.method-multiselect-trigger {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #fff;
+  color: #1f2937;
+  border: 1px solid #cfd8e3;
+  border-radius: 10px;
+  padding: 11px 12px;
+  font-weight: 600;
+}
+.method-multiselect-panel {
+  position: absolute;
+  z-index: 20;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  max-height: 220px;
+  overflow: auto;
+  background: #fff;
+  border: 1px solid #cfd8e3;
+  border-radius: 10px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+  padding: 8px;
+  display: grid;
+  gap: 6px;
+}
+.method-multiselect-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: 8px;
+  font-weight: 500;
+}
+.method-multiselect-option:hover { background: #f5f7fb; }
+.method-multiselect-option input { width: 16px; height: 16px; }

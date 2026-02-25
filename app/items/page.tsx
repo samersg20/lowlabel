@@ -70,6 +70,7 @@ export default function ItemsPage() {
   const [error, setError] = useState("");
   const [importMessage, setImportMessage] = useState("");
   const [importError, setImportError] = useState("");
+  const [methodsOpen, setMethodsOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const availableMethods = methods.map((m) => toMethodLabel(m.name)).filter((name, idx, arr) => arr.indexOf(name) === idx);
@@ -256,26 +257,36 @@ export default function ItemsPage() {
 
           <div style={{ gridColumn: "1 / -1" }}>
             <p className="section-label">Métodos aplicáveis *</p>
-            <details>
-              <summary style={{ cursor: "pointer", fontWeight: 700 }}>Selecionar métodos ({enabledOptions.length})</summary>
-              <div style={{ display: "grid", gap: 8, marginTop: 8 }}>
-                {availableMethods.map((method) => {
-                  const field = methodFieldByLabel[method];
-                  const selected = Boolean(form[field]);
-                  return (
-                    <label key={method} style={{ display: "flex", alignItems: "center", gap: 8, fontWeight: 500 }}>
-                      <input
-                        type="checkbox"
-                        checked={selected}
-                        onChange={() => toggleMethod(method)}
-                        style={{ width: 18, height: 18 }}
-                      />
-                      {method}
-                    </label>
-                  );
-                })}
-              </div>
-            </details>
+            <div className="method-multiselect" onMouseLeave={() => setMethodsOpen(false)}>
+              <button
+                type="button"
+                className="method-multiselect-trigger"
+                onClick={() => setMethodsOpen((prev) => !prev)}
+                aria-expanded={methodsOpen}
+              >
+                {enabledOptions.length ? `${enabledOptions.length} selecionado(s)` : "Selecionar métodos"}
+                <span>{methodsOpen ? "▲" : "▼"}</span>
+              </button>
+
+              {methodsOpen && (
+                <div className="method-multiselect-panel">
+                  {availableMethods.map((method) => {
+                    const field = methodFieldByLabel[method];
+                    const selected = Boolean(form[field]);
+                    return (
+                      <label key={method} className="method-multiselect-option">
+                        <input
+                          type="checkbox"
+                          checked={selected}
+                          onChange={() => toggleMethod(method)}
+                        />
+                        {method}
+                      </label>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
           </div>
 
           <label>
