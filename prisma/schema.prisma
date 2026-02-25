@@ -1,0 +1,160 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+
+
+model User {
+  id            String       @id @default(cuid())
+  name          String
+  email         String       @unique
+  username      String?      @unique
+  emailVerified DateTime?
+  image         String?
+  passwordHash  String
+  role          String       @default("OPERATOR")
+  unit          String       @default("BROOKLIN")
+  accounts      Account[]
+  sessions      Session[]
+  labelPrints   LabelPrint[]
+  printerConfigs PrinterConfig[]
+  passwordResetTokens PasswordResetToken[]
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+}
+
+model Item {
+  id           String      @id @default(cuid())
+  itemCode     String      @unique
+  name         String
+  type         String      @default("GERAL")
+  groupId      String?
+  group        ItemGroup?  @relation(fields: [groupId], references: [id], onDelete: SetNull)
+  sif          String?
+  notes        String?
+  chilledHours        Int?
+  frozenHours         Int?
+  ambientHours        Int?
+  hotHours            Int?
+  thawingHours        Int?
+  methodQuente        Boolean @default(false)
+  methodPistaFria     Boolean @default(false)
+  methodDescongelando Boolean @default(false)
+  methodResfriado     Boolean @default(false)
+  methodCongelado     Boolean @default(false)
+  methodAmbienteSecos Boolean @default(false)
+  preferredStorageMethod String?
+  prints       LabelPrint[]
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+}
+
+model Method {
+  id            Int      @id @default(autoincrement())
+  name          String   @unique
+  durationValue Int
+  durationUnit  String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model Unit {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  email       String
+  phone       String
+  managerName String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+
+model ItemGroup {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  items     Item[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+
+model PrinterConfig {
+  id        String   @id @default(cuid())
+  name      String
+  unit      String
+  apiKey    String
+  printerId Int
+  isActive  Boolean  @default(true)
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([unit])
+}
+
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model LabelPrint {
+  id            String        @id @default(cuid())
+  itemId        String
+  item          Item          @relation(fields: [itemId], references: [id], onDelete: Restrict)
+  storageMethod String
+  producedAt    DateTime
+  expiresAt     DateTime
+  userId        String
+  user          User          @relation(fields: [userId], references: [id], onDelete: Restrict)
+  quantity      Int
+  createdAt     DateTime      @default(now())
+}
+
+model Account {
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([provider, providerAccountId])
+}
+
+model Session {
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([sessionToken])
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@id([identifier, token])
+}
