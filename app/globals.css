@@ -265,3 +265,71 @@ button.print-submit { background: #28A745; color: #fff; }
 }
 .method-multiselect-option:hover { background: #f5f7fb; }
 .method-multiselect-option input { width: 16px; height: 16px; }
+
+
+.ai-action-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  max-width: 220px;
+}
+
+.ai-action-stack button {
+  width: 100%;
+  min-height: 46px;
+}
+
+.item-form {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  align-items: end;
+}
+
+.item-form-methods {
+  grid-column: 1 / span 1;
+}
+
+.item-form .method-multiselect {
+  max-width: none;
+}
+
+.item-form .section-label {
+  margin-bottom: 10px;
+}
+
+.item-form-preferred {
+  grid-column: 2 / span 1;
+}
+
+.item-form-submit-wrap {
+  grid-column: 2 / span 1;
+}
+
+.item-form-submit {
+  width: 100%;
+  min-height: 48px;
+}
+
+@media (max-width: 900px) {
+  .item-form {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .item-form-methods,
+  .item-form-preferred,
+  .item-form-submit-wrap {
+    grid-column: auto;
+  }
+}
+
+@media (max-width: 768px) {
+  .ai-action-stack {
+    max-width: none;
+  }
+
+  .item-form {
+    grid-template-columns: 1fr;
+  }
+}

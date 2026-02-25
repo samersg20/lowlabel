@@ -255,7 +255,7 @@ export default function ItemsPage() {
       </div>
 
       <div className="card">
-        <form className="grid grid-3" onSubmit={submit}>
+        <form className="item-form" onSubmit={submit}>
           <label>Item<input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value.toUpperCase() })} required /></label>
           <label>Grupo
             <select value={form.groupId} onChange={(e) => setForm({ ...form, groupId: e.target.value })} required>
@@ -267,7 +267,7 @@ export default function ItemsPage() {
           </label>
           <label>SIF<input placeholder="SIF (opcional)" value={form.sif} onChange={(e) => setForm({ ...form, sif: e.target.value })} /></label>
 
-          <div style={{ gridColumn: "1 / -1" }}>
+          <div className="item-form-methods">
             <p className="section-label">Métodos aplicáveis *</p>
             <div className="method-multiselect" ref={methodsRef}>
               <button
@@ -300,7 +300,8 @@ export default function ItemsPage() {
             </div>
           </div>
 
-          <label>
+          <div className="item-form-preferred">
+            <label>
             Método principal *
             <select
               value={form.preferredStorageMethod}
@@ -313,8 +314,11 @@ export default function ItemsPage() {
               ))}
             </select>
           </label>
+          </div>
 
-          <button type="submit">{editingId ? "Salvar" : "Criar"}</button>
+          <div className="item-form-submit-wrap">
+            <button type="submit" className="item-form-submit">{editingId ? "Salvar" : "Criar"}</button>
+          </div>
         </form>
         {error && <p style={{ color: "#b00020" }}>{error}</p>}
       </div>

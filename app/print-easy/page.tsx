@@ -80,7 +80,7 @@ export default function PrintEasyPage() {
           }}
         />
 
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+        <div className="ai-action-stack">
           <button type="button" onClick={onInterpret} disabled={loading || !input.trim()}>
             {loading ? "Processando..." : "Processar"}
           </button>
