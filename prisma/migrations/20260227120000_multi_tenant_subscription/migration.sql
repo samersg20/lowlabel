@@ -119,6 +119,11 @@ BEGIN
 END $$;
 
 -- 4) Replace global unique constraints with tenant-scoped uniques
+ALTER TABLE "Method" DROP CONSTRAINT IF EXISTS "Method_name_key";
+ALTER TABLE "Unit" DROP CONSTRAINT IF EXISTS "Unit_name_key";
+ALTER TABLE "ItemGroup" DROP CONSTRAINT IF EXISTS "ItemGroup_name_key";
+ALTER TABLE "PrinterConfig" DROP CONSTRAINT IF EXISTS "PrinterConfig_unit_key";
+
 DROP INDEX IF EXISTS "Method_name_key";
 DROP INDEX IF EXISTS "Unit_name_key";
 DROP INDEX IF EXISTS "ItemGroup_name_key";
