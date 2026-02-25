@@ -34,6 +34,7 @@ export default function LoginPage() {
         <button type="submit">Entrar</button>
       </form>
       <p style={{ marginTop: 10 }}><Link href="/forgot-password">Esqueci minha senha</Link></p>
+      <p style={{ marginTop: 6 }}><Link href="/register">Criar conta</Link></p>
       {error && <p style={{ color: "#b00020" }}>{error}</p>}
     </div>
   );
