@@ -1,0 +1,16 @@
+# SafeLabel npm registry template
+# Copy to .npmrc only if your organization requires private registry authentication.
+
+# Default public npm registry
+registry=https://registry.npmjs.org/
+
+# Optional: scope-specific private registry (uncomment and adjust)
+# @your-scope:registry=https://npm.your-company.com/
+
+# Optional: auth token for private registry (never commit real token)
+# //npm.your-company.com/:_authToken=${NPM_TOKEN}
+
+# Optional: corporate proxy settings
+# proxy=http://proxy:8080
+# https-proxy=http://proxy:8080
+# strict-ssl=true
