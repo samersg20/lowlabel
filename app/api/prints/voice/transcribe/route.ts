@@ -12,32 +12,38 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Arquivo de áudio é obrigatório" }, { status: 400 });
     }
 
-    const apiKey = [
-      process.env.GROQ_API_KEY,
-      process.env.GROQ_APIKEY,
-      process.env.GROQ_VOICE_API_KEY,
-      process.env.GROQ_API_TOKEN,
-      process.env.GROQ_TOKEN,
-    ]
-      .map((value) => String(value || "").trim().replace(/^['\"]|['\"]$/g, ""))
-      .find(Boolean) || "";
-    const orgId = process.env.GROQ_ORG_ID || "";
+    const normalizedKeyValues = [
+      ["GROQ_API_KEY", process.env.GROQ_API_KEY],
+      ["GROQ_APIKEY", process.env.GROQ_APIKEY],
+      ["GROQ_VOICE_API_KEY", process.env.GROQ_VOICE_API_KEY],
+    ] as const;
+
+    const sanitizedValues = normalizedKeyValues
+      .map(([name, value]) => [name, String(value || "").trim().replace(/^['\"]|['\"]$/g, "")] as const)
+      .filter(([, value]) => Boolean(value));
+
+    const orgId = String(process.env.GROQ_ORG_ID || "").trim();
+    const gskEntry = sanitizedValues.find(([, value]) => /^gsk_/i.test(value));
+    const apiKey = gskEntry?.[1] || "";
 
     if (!apiKey) {
-      return NextResponse.json({ error: "Configure GROQ_API_KEY (ou GROQ_VOICE_API_KEY). Não use GROQ_ORG_ID como chave da API." }, { status: 500 });
+      if (!sanitizedValues.length) {
+        return NextResponse.json({ error: "Configure GROQ_API_KEY com uma chave Groq válida (prefixo gsk_)." }, { status: 500 });
+      }
+
+      const mistakenValue = sanitizedValues[0]?.[1] || "";
+      if (mistakenValue === orgId || /^org_/i.test(mistakenValue)) {
+        return NextResponse.json({ error: "Chave inválida: GROQ_ORG_ID identifica a organização e não funciona como API key. Gere uma chave em API Keys com prefixo gsk_." }, { status: 400 });
+      }
+
+      return NextResponse.json({ error: "Chave Groq inválida. Use GROQ_API_KEY com valor que comece com gsk_." }, { status: 400 });
     }
 
-    if (apiKey === orgId || /^org_/i.test(apiKey)) {
-      return NextResponse.json({ error: "Chave inválida: GROQ_ORG_ID identifica a organização e não funciona como API key. Use GROQ_API_KEY." }, { status: 400 });
-    }
-
-    if (!/^gsk_/i.test(apiKey)) {
-      return NextResponse.json({ error: "Chave Groq inválida. A API key deve começar com 'gsk_'. Confira a variável GROQ_API_KEY no ambiente." }, { status: 400 });
-    }
+    const transcriptionModel = "whisper-large-v3-turbo";
 
     const payload = new FormData();
     payload.set("file", file);
-    payload.set("model", "whisper-large-v3-turbo");
+    payload.set("model", transcriptionModel);
     payload.set("language", "pt");
     payload.set("response_format", "json");
 
@@ -51,12 +57,12 @@ export async function POST(req: Request) {
     if (!groqRes.ok) {
       const message = String(data?.error?.message || "Falha na transcrição");
       if (groqRes.status === 401 || /invalid api key/i.test(message)) {
-        return NextResponse.json({ error: "Invalid API Key. Use GROQ_API_KEY válida (GROQ_ORG_ID não é chave de API)." }, { status: 401 });
+        return NextResponse.json({ error: "Invalid API Key. Use GROQ_API_KEY válida (prefixo gsk_). GROQ_ORG_ID não é chave de API." }, { status: 401 });
       }
       return NextResponse.json({ error: message }, { status: 400 });
     }
 
-    return NextResponse.json({ text: String(data.text || "").trim(), model: "whisper-large-v3-turbo" });
+    return NextResponse.json({ text: String(data.text || "").trim(), model: transcriptionModel });
   } catch (error: any) {
     return NextResponse.json({ error: error?.message || "Erro ao transcrever áudio" }, { status: 500 });
   }

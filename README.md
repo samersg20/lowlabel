@@ -101,9 +101,10 @@ Checklist rápido:
 - Configure no ambiente:
   - `GEMINI_API_KEY`
   - `GEMINI_MODEL` (opcional para DIGITAR; padrão `gemini-1.5-flash`)
-  - `GROQ_API_KEY` (ou aliases `GROQ_VOICE_API_KEY` / `GROQ_API_TOKEN`) para transcrição de voz com Groq Whisper (`whisper-large-v3-turbo`)
+  - `GROQ_API_KEY` (com fallback para `GROQ_APIKEY` e `GROQ_VOICE_API_KEY`) para transcrição de voz com Groq Whisper
 - `GROQ_ORG_ID` é apenas identificador da organização e **não** deve ser usado no header Authorization.
-- A chave da Groq deve começar com `gsk_`; se não começar, a API vai retornar `Invalid API Key`.
+- Endpoint de transcrição usado: `https://api.groq.com/openai/v1/audio/transcriptions`.
+- Modelo de voz suportado neste projeto: `whisper-large-v3-turbo` (Groq também suporta `whisper-large-v3`).
   - FALAR usa Gemini `gemini-3-flash-preview` para interpretação do texto transcrito.
 
 ## Fluxo de impressão
