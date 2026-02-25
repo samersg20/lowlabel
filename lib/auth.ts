@@ -10,23 +10,32 @@ export const authOptions: NextAuthOptions = {
     CredentialsProvider({
       name: "credentials",
       credentials: {
-        identifier: { label: "Usuário ou e-mail", type: "text" },
+        identifier: { label: "E-mail", type: "text" },
         password: { label: "Senha", type: "password" },
       },
       async authorize(credentials) {
         if (!credentials?.identifier || !credentials.password) return null;
 
-        const identifier = credentials.identifier.trim();
+        const identifier = credentials.identifier.trim().toLowerCase();
         const user = await prisma.user.findFirst({
           where: {
             OR: [{ email: identifier }, { username: identifier }],
           },
+          include: { tenant: true },
         });
 
         if (!user) return null;
         const valid = await compare(credentials.password, user.passwordHash);
         if (!valid) return null;
-        return { id: user.id, name: user.name, email: user.email, role: user.role, unit: user.unit } as any;
+        return {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          role: user.role,
+          unit: user.unit,
+          tenantId: user.tenantId || undefined,
+          companyName: user.tenant?.tradeName || user.tenant?.companyName || undefined,
+        } as any;
       },
     }),
   ],
@@ -37,6 +46,8 @@ export const authOptions: NextAuthOptions = {
         token.id = user.id;
         token.role = (user as any).role;
         token.unit = (user as any).unit;
+        token.tenantId = (user as any).tenantId;
+        token.companyName = (user as any).companyName;
       }
       return token;
     },
@@ -45,6 +56,8 @@ export const authOptions: NextAuthOptions = {
         session.user.id = token.id as string;
         session.user.role = token.role as string;
         session.user.unit = token.unit as string;
+        session.user.tenantId = token.tenantId as string | undefined;
+        session.user.companyName = token.companyName as string | undefined;
       }
       return session;
     },

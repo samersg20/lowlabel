@@ -5,7 +5,6 @@ import { signIn, useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { FormEvent, useEffect, useState } from "react";
 import { LowLogo } from "@/components/LowLogo";
-import { SubscribeButton } from "@/components/SubscribeButton";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -29,15 +28,12 @@ export default function LoginPage() {
     <div className="card" style={{ maxWidth: 460, margin: "40px auto", textAlign: "center" }}>
       <LowLogo width={220} />
       <form className="grid" onSubmit={onSubmit} style={{ textAlign: "left" }}>
-        <label>Usuário ou e-mail<input name="identifier" type="text" required value={identifier} onChange={(e) => setIdentifier(e.target.value)} /></label>
+        <label>E-mail<input name="identifier" type="email" required value={identifier} onChange={(e) => setIdentifier(e.target.value)} /></label>
         <label>Senha<input name="password" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} /></label>
         <button type="submit">Entrar</button>
       </form>
       <p style={{ marginTop: 10 }}><Link href="/forgot-password">Esqueci minha senha</Link></p>
       <p style={{ marginTop: 6 }}><Link href="/register">Criar conta</Link></p>
-      <div style={{ marginTop: 10 }}>
-        <SubscribeButton priceId="price_1T4ZR7FxINTwObzGkJuHJQEV" />
-      </div>
       {error && <p style={{ color: "#b00020" }}>{error}</p>}
     </div>
   );

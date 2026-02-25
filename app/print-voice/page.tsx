@@ -1,24 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
-
-type SpeechRecognitionType = {
-  lang: string;
-  interimResults: boolean;
-  continuous: boolean;
-  start: () => void;
-  stop: () => void;
-  onresult: ((event: any) => void) | null;
-  onerror: ((event: any) => void) | null;
-  onend: (() => void) | null;
-};
-
-declare global {
-  interface Window {
-    SpeechRecognition?: new () => SpeechRecognitionType;
-    webkitSpeechRecognition?: new () => SpeechRecognitionType;
-  }
-}
+import { useRef, useState } from "react";
 
 export default function PrintVoicePage() {
   const [input, setInput] = useState("");
@@ -27,66 +9,69 @@ export default function PrintVoicePage() {
   const [canPrint, setCanPrint] = useState(false);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const chunksRef = useRef<Blob[]>([]);
 
-  const canRecord = useMemo(() => {
-    if (typeof window === "undefined") return false;
-    return Boolean(window.SpeechRecognition || window.webkitSpeechRecognition);
-  }, []);
+  async function startVoiceCapture() {
+    setError("");
 
-  function startVoiceCapture() {
-    if (!canRecord) {
-      setError("Seu navegador não suporta captação de voz.");
+    if (listening) {
+      mediaRecorderRef.current?.stop();
       return;
     }
 
-    const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!Recognition) return;
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const recorder = new MediaRecorder(stream, { mimeType: "audio/webm" });
+      chunksRef.current = [];
 
-    const recognition = new Recognition();
-    recognition.lang = "pt-BR";
-    recognition.interimResults = false;
-    recognition.continuous = false;
+      recorder.ondataavailable = (event) => {
+        if (event.data.size > 0) chunksRef.current.push(event.data);
+      };
 
-    setError("");
-    setListening(true);
+      recorder.onstop = async () => {
+        setListening(false);
+        stream.getTracks().forEach((track) => track.stop());
+        const blob = new Blob(chunksRef.current, { type: "audio/webm" });
+        await transcribeAndInterpret(blob);
+      };
 
-    recognition.onresult = (event: any) => {
-      const transcript = Array.from(event.results || [])
-        .map((result: any) => result?.[0]?.transcript || "")
-        .join(" ")
-        .trim();
-
-      if (transcript) {
-        setInput(transcript);
-        void interpretTranscript(transcript);
-      }
-    };
-
-    recognition.onerror = () => {
-      setError("Não foi possível capturar o áudio. Tente novamente.");
-    };
-
-    recognition.onend = () => {
-      setListening(false);
-    };
-
-    recognition.start();
+      mediaRecorderRef.current = recorder;
+      recorder.start();
+      setListening(true);
+    } catch {
+      setError("Não foi possível acessar o microfone.");
+    }
   }
 
-  async function interpretTranscript(text: string) {
+  async function transcribeAndInterpret(blob: Blob) {
     setLoading(true);
     setError("");
     setMessage("");
 
     try {
-      const res = await fetch("/api/prints/voice/parse", {
+      const form = new FormData();
+      form.append("audio", new File([blob], "voice.webm", { type: "audio/webm" }));
+
+      const transcribeRes = await fetch("/api/prints/voice/transcribe", {
+        method: "POST",
+        body: form,
+      });
+      const transcribeData = await transcribeRes.json().catch(() => ({}));
+      if (!transcribeRes.ok) throw new Error(transcribeData.error || "Falha ao transcrever áudio");
+
+      const text = String(transcribeData.text || "").trim();
+      if (!text) throw new Error("Não foi possível identificar texto no áudio");
+
+      const parseRes = await fetch("/api/prints/voice/parse", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ input: text }),
       });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.error || "Falha ao interpretar áudio");
-      setInput(String(data.parsedText || text));
+      const parseData = await parseRes.json().catch(() => ({}));
+      if (!parseRes.ok) throw new Error(parseData.error || "Falha ao interpretar áudio");
+
+      setInput(String(parseData.parsedText || text));
       setCanPrint(true);
     } catch (e: any) {
       setError(e.message || "Erro no Falar");
@@ -130,7 +115,7 @@ export default function PrintVoicePage() {
 
   return (
     <>
-      <h1>Falar</h1>
+      <h1>Voz IA</h1>
       <div className="card grid">
         <p style={{ margin: 0 }}>
           <span style={{ fontWeight: 700 }}>Fale seu pedido.</span><br />
@@ -147,8 +132,8 @@ export default function PrintVoicePage() {
         />
 
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-          <button type="button" onClick={startVoiceCapture} disabled={!canRecord || listening || loading}>
-            {listening ? "Ouvindo..." : "Gravar voz"}
+          <button type="button" onClick={startVoiceCapture} disabled={loading}>
+            {listening ? "Parar gravação" : "Gravar voz"}
           </button>
           <button type="button" onClick={onSubmit} disabled={loading || !canPrint} className={!canPrint ? "secondary" : "print-submit"}>
             {loading ? "Processando..." : "Imprimir"}

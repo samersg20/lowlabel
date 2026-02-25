@@ -5,7 +5,7 @@ import { submitRawZplToPrintNode } from "@/lib/printnode";
 
 type AiOrder = { itemId?: string; quantity?: number; itemName?: string };
 
-type SessionUser = { id: string; name: string; unit: string };
+type SessionUser = { id: string; name: string; unit: string; tenantId?: string };
 
 function enabledMethodsForItem(item: any): StorageMethod[] {
   const methods: StorageMethod[] = [];
@@ -75,9 +75,9 @@ export async function processAiPrintOrder({
   model: string;
   maxQuantity: number;
 }) {
-  const parsedOrders = await parseAiPrintOrder({ input, model, maxQuantity });
+  const parsedOrders = await parseAiPrintOrder({ input, model, maxQuantity, tenantId: sessionUser.tenantId });
 
-  const printerConfig = await prisma.printerConfig.findFirst({ where: { unit: sessionUser.unit, isActive: true } });
+  const printerConfig = await prisma.printerConfig.findFirst({ where: { tenantId: sessionUser.tenantId, unit: sessionUser.unit, isActive: true } });
   const results: Array<{ itemName: string; quantity: number; method: string; jobIds: number[] }> = [];
 
   for (const parsed of parsedOrders) {
@@ -88,6 +88,7 @@ export async function processAiPrintOrder({
 
     await prisma.labelPrint.create({
       data: {
+        tenantId: sessionUser.tenantId,
         itemId: parsed.item.id,
         storageMethod: parsed.storageMethod,
         producedAt,
@@ -123,12 +124,15 @@ export async function parseAiPrintOrder({
   input,
   model,
   maxQuantity,
+  tenantId,
 }: {
   input: string;
   model: string;
   maxQuantity: number;
+  tenantId?: string;
 }) {
   const items = await prisma.item.findMany({
+    where: tenantId ? { tenantId } : undefined,
     select: {
       id: true,
       name: true,
@@ -145,9 +149,7 @@ export async function parseAiPrintOrder({
   });
 
   const aiOrders = await parseWithGemini(input, items.map((i) => ({ id: i.id, name: i.name })), model);
-  if (!aiOrders.length) {
-    throw new Error("Não consegui identificar itens válidos no texto");
-  }
+  if (!aiOrders.length) throw new Error("Não consegui identificar itens válidos no texto");
 
   const byId = new Map(items.map((i) => [i.id, i]));
   const parsedResults: Array<{ item: (typeof items)[number]; quantity: number; storageMethod: StorageMethod }> = [];
@@ -162,21 +164,14 @@ export async function parseAiPrintOrder({
     if (!item) continue;
 
     const storageMethod = pickDefaultMethod(item);
-    if (!storageMethod) {
-      throw new Error(`Item sem método habilitado: ${item.name}`);
-    }
+    if (!storageMethod) throw new Error(`Item sem método habilitado: ${item.name}`);
 
     parsedResults.push({ item, quantity, storageMethod });
   }
 
   const totalQuantity = parsedResults.reduce((sum, row) => sum + row.quantity, 0);
-  if (totalQuantity > maxQuantity) {
-    throw new Error(`Máximo ${maxQuantity} etiquetas por requisição`);
-  }
-
-  if (!parsedResults.length) {
-    throw new Error("Nenhum item válido encontrado para impressão");
-  }
+  if (totalQuantity > maxQuantity) throw new Error(`Máximo ${maxQuantity} etiquetas por requisição`);
+  if (!parsedResults.length) throw new Error("Nenhum item válido encontrado para impressão");
 
   return parsedResults;
 }

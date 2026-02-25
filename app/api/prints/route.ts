@@ -1,52 +1,27 @@
 import { auth } from "@/lib/auth";
-import { STORAGE_METHOD_RULES, type StorageMethod } from "@/lib/constants";
 import { prisma } from "@/lib/prisma";
-import { makeZplLabel } from "@/lib/zpl";
-import { submitRawZplToPrintNode } from "@/lib/printnode";
 import { NextResponse } from "next/server";
-
-function isMethodEnabledForItem(item: any, method: StorageMethod): boolean {
-  switch (method) {
-    case "QUENTE":
-      return Boolean(item.methodQuente);
-    case "PISTA FRIA":
-      return Boolean(item.methodPistaFria);
-    case "DESCONGELANDO":
-      return Boolean(item.methodDescongelando);
-    case "RESFRIADO":
-      return Boolean(item.methodResfriado);
-    case "CONGELADO":
-      return Boolean(item.methodCongelado);
-    case "AMBIENTE SECOS":
-      return Boolean(item.methodAmbienteSecos);
-    default:
-      return false;
-  }
-}
+import { STORAGE_METHOD_RULES } from "@/lib/constants";
+import { submitRawZplToPrintNode } from "@/lib/printnode";
+import { makeZplLabel } from "@/lib/zpl";
 
 export async function POST(req: Request) {
   try {
     const session = await auth();
     if (!session?.user) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+
     const body = await req.json();
-
     const quantity = Number(body.quantity);
-    if (!Number.isFinite(quantity) || !Number.isInteger(quantity) || quantity < 1 || quantity > 20) {
-      return NextResponse.json({ error: "Quantidade deve estar entre 1 e 20" }, { status: 400 });
+
+    if (!body.itemId || !body.storageMethod || !Number.isInteger(quantity) || quantity < 1 || quantity > 20) {
+      return NextResponse.json({ error: "Dados inválidos (itemId/storageMethod/quantity)" }, { status: 400 });
     }
 
-    const storageMethod = body.storageMethod as StorageMethod;
-    const methodRule = STORAGE_METHOD_RULES[storageMethod];
-    if (!methodRule) {
-      return NextResponse.json({ error: "Método inválido" }, { status: 400 });
-    }
-
-    const item = await prisma.item.findUnique({ where: { id: body.itemId } });
+    const item = await prisma.item.findFirst({ where: { id: body.itemId, tenantId: session.user.tenantId } });
     if (!item) return NextResponse.json({ error: "Item não encontrado" }, { status: 404 });
 
-    if (!isMethodEnabledForItem(item, storageMethod)) {
-      return NextResponse.json({ error: "Método não habilitado para este produto" }, { status: 400 });
-    }
+    const methodRule = STORAGE_METHOD_RULES[body.storageMethod as keyof typeof STORAGE_METHOD_RULES];
+    if (!methodRule) return NextResponse.json({ error: "Método inválido" }, { status: 400 });
 
     const producedAt = new Date();
     const multiplier = methodRule.unit === "hours" ? 60 * 60 * 1000 : 24 * 60 * 60 * 1000;
@@ -54,8 +29,9 @@ export async function POST(req: Request) {
 
     const print = await prisma.labelPrint.create({
       data: {
+        tenantId: session.user.tenantId,
         itemId: item.id,
-        storageMethod,
+        storageMethod: body.storageMethod,
         producedAt,
         expiresAt,
         userId: session.user.id,
@@ -63,35 +39,20 @@ export async function POST(req: Request) {
       },
     });
 
-    const printerConfig = await prisma.printerConfig.findFirst({ where: { unit: session.user.unit, isActive: true } });
+    const zpl = makeZplLabel({ name: item.name, storageMethod: body.storageMethod, producedAt, expiresAt, userName: session.user.name || "ADMIN", sif: item.sif });
 
-    const zpl = makeZplLabel({
-      name: item.name,
-      storageMethod,
-      producedAt,
-      expiresAt,
-      userName: session.user.name,
-      sif: item.sif,
-    });
+    const printerConfig = await prisma.printerConfig.findFirst({ where: { tenantId: session.user.tenantId, unit: session.user.unit, isActive: true } });
 
-    const jobIds = await submitRawZplToPrintNode(
-      zpl,
-      quantity,
-      `Etiqueta ${item.name} - ${storageMethod}`,
-      printerConfig ? { apiKey: printerConfig.apiKey, printerId: printerConfig.printerId } : undefined,
-    );
+    const printerId = printerConfig?.printerId || Number(process.env.PRINTNODE_PRINTER_ID || process.env.PRINTNODE_PRINT_ID || 0);
+    const apiKey = printerConfig?.apiKey || process.env.PRINTNODE_API_KEY || "";
 
-    return NextResponse.json({
-      print,
-      item,
-      user: session.user,
-      producedAt,
-      expiresAt,
-      storageMethod,
-      jobIds,
-      printerUnit: session.user.unit,
-      printerSource: printerConfig ? "cadastro" : "env",
-    });
+    if (!printerId || !apiKey) {
+      return NextResponse.json({ error: "Impressora não configurada para a unidade do usuário" }, { status: 400 });
+    }
+
+    const jobIds = await submitRawZplToPrintNode(zpl, quantity, `Etiqueta ${item.name}`, { apiKey, printerId });
+
+    return NextResponse.json({ ok: true, printId: print.id, quantity, jobIds });
   } catch (error: any) {
     return NextResponse.json({ error: error?.message || "Falha ao emitir etiqueta" }, { status: 500 });
   }

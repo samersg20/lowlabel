@@ -1,13 +1,15 @@
-import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
+import { requireTenantSession, isStrongPassword } from "@/lib/tenant";
 
 export async function GET() {
-  const session = await auth();
-  if (!session?.user) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
-  if (session.user.role !== "ADMIN") return NextResponse.json({ error: "forbidden" }, { status: 403 });
+  const scoped = await requireTenantSession();
+  if ("error" in scoped) return scoped.error;
+  if (scoped.session.user.role !== "ADMIN") return NextResponse.json({ error: "forbidden" }, { status: 403 });
+
   const users = await prisma.user.findMany({
+    where: { tenantId: scoped.tenantId },
     select: { id: true, name: true, username: true, email: true, role: true, unit: true, createdAt: true },
     orderBy: { createdAt: "desc" },
   });
@@ -15,20 +17,28 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
-  const session = await auth();
-  if (!session?.user) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
-  if (session.user.role !== "ADMIN") return NextResponse.json({ error: "forbidden" }, { status: 403 });
-  const body = await req.json();
+  const scoped = await requireTenantSession();
+  if ("error" in scoped) return scoped.error;
+  if (scoped.session.user.role !== "ADMIN") return NextResponse.json({ error: "forbidden" }, { status: 403 });
 
-  const passwordHash = await bcrypt.hash(body.password, 10);
+  const body = await req.json();
+  const email = String(body.email || "").trim().toLowerCase();
+  const password = String(body.password || "");
+
+  if (!email || !password || !isStrongPassword(password)) {
+    return NextResponse.json({ error: "Email e senha forte são obrigatórios" }, { status: 400 });
+  }
+
+  const passwordHash = await bcrypt.hash(password, 10);
   const created = await prisma.user.create({
     data: {
-      name: body.name,
-      username: body.username || null,
-      email: body.email,
+      tenantId: scoped.tenantId,
+      name: String(body.name || email).trim(),
+      username: email,
+      email,
       passwordHash,
       role: body.role || "OPERATOR",
-      unit: body.unit || "BROOKLIN",
+      unit: body.unit || scoped.session.user.unit || "MATRIZ",
     },
     select: { id: true, name: true, username: true, email: true, role: true, unit: true, createdAt: true },
   });

@@ -18,15 +18,9 @@ function enabledMethodsFromBody(body: any): StorageMethod[] {
 function sanitizePreferredStorageMethod(body: any): StorageMethod | null {
   const preferred = typeof body.preferredStorageMethod === "string" ? body.preferredStorageMethod.trim() : "";
   if (!preferred) return null;
-  if (!STORAGE_METHODS.includes(preferred as StorageMethod)) {
-    throw new Error("Método preferencial inválido");
-  }
-
+  if (!STORAGE_METHODS.includes(preferred as StorageMethod)) throw new Error("Método preferencial inválido");
   const enabled = enabledMethodsFromBody(body);
-  if (!enabled.includes(preferred as StorageMethod)) {
-    throw new Error("Método preferencial precisa estar habilitado nos métodos aplicáveis");
-  }
-
+  if (!enabled.includes(preferred as StorageMethod)) throw new Error("Método preferencial precisa estar habilitado");
   return preferred as StorageMethod;
 }
 
@@ -38,7 +32,7 @@ export async function GET(req: Request) {
   const groupId = searchParams.get("groupId");
 
   const items = await prisma.item.findMany({
-    where: groupId ? { groupId } : undefined,
+    where: { tenantId: session.user.tenantId, ...(groupId ? { groupId } : {}) },
     include: { group: true },
     orderBy: { name: "asc" },
   });
@@ -52,7 +46,6 @@ export async function POST(req: Request) {
   if (session.user.role !== "ADMIN") return NextResponse.json({ error: "forbidden" }, { status: 403 });
 
   const body = await req.json();
-
   let preferredStorageMethod: StorageMethod | null;
   try {
     preferredStorageMethod = sanitizePreferredStorageMethod(body);
@@ -62,6 +55,7 @@ export async function POST(req: Request) {
 
   const created = await prisma.item.create({
     data: {
+      tenantId: session.user.tenantId,
       itemCode: await generateUniqueItemCode(),
       name: String(body.name || "").trim().toUpperCase(),
       type: "GERAL",

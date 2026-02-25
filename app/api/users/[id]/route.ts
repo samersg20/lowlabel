@@ -7,33 +7,34 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
   const session = await auth();
   if (!session?.user) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   if (session.user.role !== "ADMIN") return NextResponse.json({ error: "forbidden" }, { status: 403 });
-  const body = await req.json();
 
+  const body = await req.json();
   const data: any = {
     name: body.name,
-    username: body.username || null,
     email: body.email,
+    username: body.email,
     role: body.role,
     unit: body.unit,
   };
+  if (body.password) data.passwordHash = await bcrypt.hash(body.password, 10);
 
-  if (body.password) {
-    data.passwordHash = await bcrypt.hash(body.password, 10);
-  }
-
-  const updated = await prisma.user.update({
-    where: { id: params.id },
+  const updated = await prisma.user.updateMany({
+    where: { id: params.id, tenantId: session.user.tenantId },
     data,
-    select: { id: true, name: true, username: true, email: true, role: true, unit: true, createdAt: true },
   });
 
-  return NextResponse.json(updated);
+  if (!updated.count) return NextResponse.json({ error: "not_found" }, { status: 404 });
+
+  const row = await prisma.user.findUnique({ where: { id: params.id }, select: { id: true, name: true, username: true, email: true, role: true, unit: true } });
+  return NextResponse.json(row);
 }
 
 export async function DELETE(_req: Request, { params }: { params: { id: string } }) {
   const session = await auth();
   if (!session?.user) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   if (session.user.role !== "ADMIN") return NextResponse.json({ error: "forbidden" }, { status: 403 });
-  await prisma.user.delete({ where: { id: params.id } });
+
+  const deleted = await prisma.user.deleteMany({ where: { id: params.id, tenantId: session.user.tenantId } });
+  if (!deleted.count) return NextResponse.json({ error: "not_found" }, { status: 404 });
   return NextResponse.json({ ok: true });
 }

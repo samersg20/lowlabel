@@ -17,15 +17,9 @@ function enabledMethodsFromBody(body: any): StorageMethod[] {
 function sanitizePreferredStorageMethod(body: any): StorageMethod | null {
   const preferred = typeof body.preferredStorageMethod === "string" ? body.preferredStorageMethod.trim() : "";
   if (!preferred) return null;
-  if (!STORAGE_METHODS.includes(preferred as StorageMethod)) {
-    throw new Error("Método preferencial inválido");
-  }
-
+  if (!STORAGE_METHODS.includes(preferred as StorageMethod)) throw new Error("Método preferencial inválido");
   const enabled = enabledMethodsFromBody(body);
-  if (!enabled.includes(preferred as StorageMethod)) {
-    throw new Error("Método preferencial precisa estar habilitado nos métodos aplicáveis");
-  }
-
+  if (!enabled.includes(preferred as StorageMethod)) throw new Error("Método preferencial precisa estar habilitado");
   return preferred as StorageMethod;
 }
 
@@ -43,11 +37,10 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
     return NextResponse.json({ error: error?.message || "Dados inválidos" }, { status: 400 });
   }
 
-  const updated = await prisma.item.update({
-    where: { id: params.id },
+  const updated = await prisma.item.updateMany({
+    where: { id: params.id, tenantId: session.user.tenantId },
     data: {
       name: String(body.name || "").trim().toUpperCase(),
-      type: "GERAL",
       groupId: body.groupId || null,
       sif: body.sif || null,
       notes: body.notes || null,
@@ -64,15 +57,19 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
       methodAmbienteSecos: Boolean(body.methodAmbienteSecos),
       preferredStorageMethod,
     },
-    include: { group: true },
   });
-  return NextResponse.json(updated);
+
+  if (!updated.count) return NextResponse.json({ error: "not_found" }, { status: 404 });
+  const row = await prisma.item.findUnique({ where: { id: params.id }, include: { group: true } });
+  return NextResponse.json(row);
 }
 
 export async function DELETE(_req: Request, { params }: { params: { id: string } }) {
   const session = await auth();
   if (!session?.user) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   if (session.user.role !== "ADMIN") return NextResponse.json({ error: "forbidden" }, { status: 403 });
-  await prisma.item.delete({ where: { id: params.id } });
+
+  const deleted = await prisma.item.deleteMany({ where: { id: params.id, tenantId: session.user.tenantId } });
+  if (!deleted.count) return NextResponse.json({ error: "not_found" }, { status: 404 });
   return NextResponse.json({ ok: true });
 }
