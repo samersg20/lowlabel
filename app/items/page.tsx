@@ -62,6 +62,7 @@ export default function ItemsPage() {
   const [importMessage, setImportMessage] = useState("");
   const [importError, setImportError] = useState("");
   const [methodsOpen, setMethodsOpen] = useState(false);
+  const methodsRef = useRef<HTMLDivElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const availableMethods = useMemo(
@@ -93,6 +94,19 @@ export default function ItemsPage() {
   useEffect(() => {
     load();
   }, [groupFilter]);
+
+  useEffect(() => {
+    function onPointerDown(event: MouseEvent) {
+      if (!methodsRef.current) return;
+      const target = event.target as Node;
+      if (!methodsRef.current.contains(target)) {
+        setMethodsOpen(false);
+      }
+    }
+
+    document.addEventListener("mousedown", onPointerDown);
+    return () => document.removeEventListener("mousedown", onPointerDown);
+  }, []);
 
   function checkedMethodsCount(currentForm: ItemForm) {
     return currentForm.selectedMethods.length;
@@ -255,7 +269,7 @@ export default function ItemsPage() {
 
           <div style={{ gridColumn: "1 / -1" }}>
             <p className="section-label">Métodos aplicáveis *</p>
-            <div className="method-multiselect" onMouseLeave={() => setMethodsOpen(false)}>
+            <div className="method-multiselect" ref={methodsRef}>
               <button
                 type="button"
                 className="method-multiselect-trigger"
