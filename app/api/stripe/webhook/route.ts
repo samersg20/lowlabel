@@ -1,7 +1,7 @@
 import { createHmac, timingSafeEqual } from "crypto";
 import { NextResponse } from "next/server";
 import { getStripeWebhookSecret } from "@/lib/stripe";
-import { withTenantRls } from "@/lib/rls";
+import { withTenantIdTx } from "@/lib/tenant-tx";
 
 function parseStripeSignature(signature: string) {
   const parts = signature.split(",").map((part) => part.trim());
@@ -40,7 +40,7 @@ async function handleSubscriptionCheckoutCompleted(session: any) {
   const printerLimit = Number(session.metadata?.printerLimit || 1);
 
   if (tenantId) {
-    await withTenantRls(tenantId, async (tx) => {
+    await withTenantIdTx(tenantId, async ({ tx }) => {
       await tx.tenant.update({
         where: { id: tenantId },
         data: {

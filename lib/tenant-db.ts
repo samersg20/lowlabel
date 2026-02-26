@@ -36,6 +36,33 @@ function addTenantToData(tenantId: string, data: any) {
   return { ...data, tenantId };
 }
 
+function applyTenantToArgs(tenantId: string, model: string, operation: string, args: any) {
+  if (TENANT_MODELS.has(model)) {
+    if (operation === "create" || operation === "createMany") {
+      args.data = addTenantToData(tenantId, args.data);
+    }
+    if (operation === "findMany" || operation === "findFirst" || operation === "count" || operation === "aggregate" || operation === "groupBy") {
+      args.where = addTenantWhere(tenantId, args.where);
+    }
+    if (operation === "updateMany" || operation === "deleteMany") {
+      args.where = addTenantWhere(tenantId, args.where);
+    }
+    return args;
+  }
+
+  if (TENANT_BY_ID_MODELS.has(model)) {
+    if (operation === "findMany" || operation === "findFirst" || operation === "count" || operation === "aggregate" || operation === "groupBy") {
+      args.where = addTenantIdWhere(tenantId, args.where);
+    }
+    if (operation === "updateMany" || operation === "deleteMany") {
+      args.where = addTenantIdWhere(tenantId, args.where);
+    }
+    return args;
+  }
+
+  throw new Error(`tenantDb_forbidden_model:${model}`);
+}
+
 function tenantScopedClient(tenantId: TenantId) {
   const scopedTenantId = ensureTenantId(tenantId);
 
@@ -48,38 +75,12 @@ function tenantScopedClient(tenantId: TenantId) {
           throw new Error(`tenantDb_forbidden_operation:${operation}`);
         }
 
-        if (TENANT_MODELS.has(model)) {
-          if (operation === "create" || operation === "createMany") {
-            args.data = addTenantToData(scopedTenantId, args.data);
-          }
-          if (operation === "findMany" || operation === "findFirst" || operation === "count" || operation === "aggregate" || operation === "groupBy") {
-            args.where = addTenantWhere(scopedTenantId, args.where);
-          }
-          if (operation === "updateMany" || operation === "deleteMany") {
-            args.where = addTenantWhere(scopedTenantId, args.where);
-          }
-          const [, result] = await prisma.$transaction([
-            prisma.$executeRaw`select set_config('app.tenant_id', ${scopedTenantId}, true)`,
-            query(args),
-          ]);
-          return result;
-        }
-
-        if (TENANT_BY_ID_MODELS.has(model)) {
-          if (operation === "findMany" || operation === "findFirst" || operation === "count" || operation === "aggregate" || operation === "groupBy") {
-            args.where = addTenantIdWhere(scopedTenantId, args.where);
-          }
-          if (operation === "updateMany" || operation === "deleteMany") {
-            args.where = addTenantIdWhere(scopedTenantId, args.where);
-          }
-          const [, result] = await prisma.$transaction([
-            prisma.$executeRaw`select set_config('app.tenant_id', ${scopedTenantId}, true)`,
-            query(args),
-          ]);
-          return result;
-        }
-
-        throw new Error(`tenantDb_forbidden_model:${model}`);
+        const nextArgs = applyTenantToArgs(scopedTenantId, model, operation, args);
+        const [, result] = await prisma.$transaction([
+          prisma.$executeRaw`select set_config('app.tenant_id', ${scopedTenantId}, true)`,
+          query(nextArgs),
+        ]);
+        return result;
       },
     },
   });
@@ -87,4 +88,33 @@ function tenantScopedClient(tenantId: TenantId) {
 
 export function tenantDb(tenantId: TenantId) {
   return tenantScopedClient(tenantId);
+}
+
+export function tenantDbFromTx(tx: any, tenantId: TenantId) {
+  const scopedTenantId = ensureTenantId(tenantId);
+
+  return new Proxy(
+    {},
+    {
+      get(_target, prop) {
+        if (typeof prop !== "string") return undefined;
+        if (!tx[prop]) return undefined;
+        return new Proxy(tx[prop], {
+          get(delegateTarget, op) {
+            if (typeof op !== "string") return undefined;
+            if (FORBIDDEN_OPERATIONS.has(op)) {
+              return () => {
+                throw new Error(`tenantDb_forbidden_operation:${op}`);
+              };
+            }
+            if (typeof (delegateTarget as any)[op] !== "function") return undefined;
+            return (args: any = {}) => {
+              const nextArgs = applyTenantToArgs(scopedTenantId, prop.charAt(0).toUpperCase() + prop.slice(1), op, { ...args });
+              return (delegateTarget as any)[op](nextArgs);
+            };
+          },
+        });
+      },
+    },
+  ) as any;
 }

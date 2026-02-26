@@ -1,6 +1,5 @@
-import { tenantDb } from "@/lib/tenant-db";
-import { requireTenantSession } from "@/lib/tenant";
 import { NextResponse } from "next/server";
+import { withTenantTx } from "@/lib/tenant-tx";
 
 type LegacyFlags = {
   methodQuente?: boolean;
@@ -25,21 +24,21 @@ function selectedMethodsFromLegacy(body: LegacyFlags) {
 function sanitizeSelectedMethods(body: any): string[] {
   if (Array.isArray(body.selectedMethods)) {
     const unique = Array.from(new Set(body.selectedMethods.map((m: any) => String(m || "").trim().toUpperCase()).filter((m: string) => Boolean(m)))) as string[];
-    if (!unique.length) throw new Error("Selecione ao menos um método aplicável");
+    if (!unique.length) throw new Error("Selecione ao menos um mÃ©todo aplicÃ¡vel");
     return unique;
   }
 
   const legacy = selectedMethodsFromLegacy(body);
-  if (!legacy.length) throw new Error("Selecione ao menos um método aplicável");
+  if (!legacy.length) throw new Error("Selecione ao menos um mÃ©todo aplicÃ¡vel");
   return legacy;
 }
 
 function sanitizePreferredStorageMethod(body: any, enabledMethods: string[]): string {
   const preferred = typeof body.preferredStorageMethod === "string" ? body.preferredStorageMethod.trim().toUpperCase() : "";
   if (!preferred) {
-    throw new Error("Método principal é obrigatório");
+    throw new Error("MÃ©todo principal Ã© obrigatÃ³rio");
   }
-  if (!enabledMethods.includes(preferred)) throw new Error("Método principal precisa estar habilitado");
+  if (!enabledMethods.includes(preferred)) throw new Error("MÃ©todo principal precisa estar habilitado");
   return preferred;
 }
 
@@ -55,54 +54,52 @@ function legacyFlagsFromSelected(selectedMethods: string[]) {
 }
 
 export async function PUT(req: Request, { params }: { params: { id: string } }) {
-  const scoped = await requireTenantSession();
-  if ("error" in scoped) return scoped.error;
-  if (scoped.session.user.role !== "ADMIN") return NextResponse.json({ error: "forbidden" }, { status: 403 });
+  return withTenantTx(req, async ({ db, session }) => {
+    if (session.user.role !== "ADMIN") return NextResponse.json({ error: "forbidden" }, { status: 403 });
 
-  const body = await req.json();
+    const body = await req.json();
 
-  let selectedMethods: string[];
-  let preferredStorageMethod: string;
-  try {
-    selectedMethods = sanitizeSelectedMethods(body);
-    preferredStorageMethod = sanitizePreferredStorageMethod(body, selectedMethods);
-  } catch (error: any) {
-    return NextResponse.json({ error: error?.message || "Dados inválidos" }, { status: 400 });
-  }
+    let selectedMethods: string[];
+    let preferredStorageMethod: string;
+    try {
+      selectedMethods = sanitizeSelectedMethods(body);
+      preferredStorageMethod = sanitizePreferredStorageMethod(body, selectedMethods);
+    } catch (error: any) {
+      return NextResponse.json({ error: error?.message || "Dados invÃ¡lidos" }, { status: 400 });
+    }
 
-  const flags = legacyFlagsFromSelected(selectedMethods);
+    const flags = legacyFlagsFromSelected(selectedMethods);
 
-  const db = tenantDb(scoped.tenantId);
-  const updated = await db.item.updateMany({
-    where: { id: params.id },
-    data: {
-      name: String(body.name || "").trim().toUpperCase(),
-      groupId: body.groupId || null,
-      sif: body.sif || null,
-      notes: body.notes || null,
-      chilledHours: body.chilledHours,
-      frozenHours: body.frozenHours,
-      ambientHours: body.ambientHours,
-      hotHours: body.hotHours,
-      thawingHours: body.thawingHours,
-      ...flags,
-      selectedMethods,
-      preferredStorageMethod,
-    },
+    const updated = await db.item.updateMany({
+      where: { id: params.id },
+      data: {
+        name: String(body.name || "").trim().toUpperCase(),
+        groupId: body.groupId || null,
+        sif: body.sif || null,
+        notes: body.notes || null,
+        chilledHours: body.chilledHours,
+        frozenHours: body.frozenHours,
+        ambientHours: body.ambientHours,
+        hotHours: body.hotHours,
+        thawingHours: body.thawingHours,
+        ...flags,
+        selectedMethods,
+        preferredStorageMethod,
+      },
+    });
+
+    if (!updated.count) return NextResponse.json({ error: "not_found" }, { status: 404 });
+    const row = await db.item.findFirst({ where: { id: params.id }, include: { group: true } });
+    return NextResponse.json(row);
   });
-
-  if (!updated.count) return NextResponse.json({ error: "not_found" }, { status: 404 });
-  const row = await db.item.findFirst({ where: { id: params.id }, include: { group: true } });
-  return NextResponse.json(row);
 }
 
 export async function DELETE(_req: Request, { params }: { params: { id: string } }) {
-  const scoped = await requireTenantSession();
-  if ("error" in scoped) return scoped.error;
-  if (scoped.session.user.role !== "ADMIN") return NextResponse.json({ error: "forbidden" }, { status: 403 });
+  return withTenantTx(_req, async ({ db, session }) => {
+    if (session.user.role !== "ADMIN") return NextResponse.json({ error: "forbidden" }, { status: 403 });
 
-  const db = tenantDb(scoped.tenantId);
-  const deleted = await db.item.deleteMany({ where: { id: params.id } });
-  if (!deleted.count) return NextResponse.json({ error: "not_found" }, { status: 404 });
-  return NextResponse.json({ ok: true });
+    const deleted = await db.item.deleteMany({ where: { id: params.id } });
+    if (!deleted.count) return NextResponse.json({ error: "not_found" }, { status: 404 });
+    return NextResponse.json({ ok: true });
+  });
 }

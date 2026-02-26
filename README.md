@@ -25,8 +25,8 @@ npm run dev
 
 ## Row Level Security (RLS)
 - As tabelas multi-tenant usam RLS no Postgres com a variÃ¡vel `app.tenant_id`.
-- Cada request autenticada usa `tenantDb(tenantId)` que seta `app.tenant_id` antes das queries.
-- Fluxos pÃºblicos (register/forgot/reset/stripe webhook) usam `app.bypass_rls=1` apenas dentro de transaÃ§Ãµes controladas.
+- Rotas autenticadas usam `withTenantTx` para setar `app.tenant_id` **uma vez por request** e executar todas as queries na mesma transaÃ§Ã£o.
+- Fluxos pÃºblicos (register/forgot/reset/stripe webhook) usam `withRlsBypassTx` ou `withTenantIdTx` dentro de transaÃ§Ãµes controladas.
 
 Debug rÃ¡pido (psql):
 ```sql
@@ -179,3 +179,7 @@ O script valida automaticamente:
 - O primeiro usuário da conta nasce como `ADMIN`.
 - Uma unidade inicial é criada automaticamente com o nome do bairro informado no cadastro.
 - O limite de impressoras é controlado pelo plano contratado no Stripe.
+
+## Teste multi-tenant
+- `npm run test:tenant` (usa tsx; pode falhar por restri��es de spawn no Windows)
+- `npm run test:tenant:win` (fallback sem esbuild)
