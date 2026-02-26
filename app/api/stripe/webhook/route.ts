@@ -1,7 +1,7 @@
 import { createHmac, timingSafeEqual } from "crypto";
 import { NextResponse } from "next/server";
 import { getStripeWebhookSecret } from "@/lib/stripe";
-import { prisma } from "@/lib/prisma";
+import { withTenantRls } from "@/lib/rls";
 
 function parseStripeSignature(signature: string) {
   const parts = signature.split(",").map((part) => part.trim());
@@ -40,21 +40,23 @@ async function handleSubscriptionCheckoutCompleted(session: any) {
   const printerLimit = Number(session.metadata?.printerLimit || 1);
 
   if (tenantId) {
-    await prisma.tenant.update({
-      where: { id: tenantId },
-      data: {
-        stripeCustomerId: customerId || undefined,
-        stripeSubscriptionId: subscriptionId || undefined,
-        subscriptionStatus: "active",
-        printerLimit: Number.isFinite(printerLimit) ? Math.max(1, printerLimit) : 1,
-      },
-    });
-  }
+    await withTenantRls(tenantId, async (tx) => {
+      await tx.tenant.update({
+        where: { id: tenantId },
+        data: {
+          stripeCustomerId: customerId || undefined,
+          stripeSubscriptionId: subscriptionId || undefined,
+          subscriptionStatus: "active",
+          printerLimit: Number.isFinite(printerLimit) ? Math.max(1, printerLimit) : 1,
+        },
+      });
 
-  if (email && customerId) {
-    await prisma.user.updateMany({
-      where: { email },
-      data: { role: "ADMIN" },
+      if (email && customerId) {
+        await tx.user.updateMany({
+          where: { email },
+          data: { role: "ADMIN" },
+        });
+      }
     });
   }
 

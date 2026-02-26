@@ -1,5 +1,6 @@
 import { tenantDb } from "@/lib/tenant-db";
 import { requireTenantSession } from "@/lib/tenant";
+import { requireUnitForTenant } from "@/lib/unit-validation";
 import { NextResponse } from "next/server";
 import { STORAGE_METHOD_RULES } from "@/lib/constants";
 import { submitRawZplToPrintNode } from "@/lib/printnode";
@@ -29,6 +30,11 @@ export async function POST(req: Request) {
     }
 
     const db = tenantDb(scoped.tenantId);
+    try {
+      await requireUnitForTenant(scoped.tenantId, scoped.session.user.unit);
+    } catch {
+      return NextResponse.json({ error: "Unidade invÃ¡lida" }, { status: 400 });
+    }
     const item = await db.item.findFirst({ where: { id: body.itemId } });
     if (!item) return NextResponse.json({ error: "Item não encontrado" }, { status: 404 });
 

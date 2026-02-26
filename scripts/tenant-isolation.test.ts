@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import { prisma } from "@/lib/prisma";
 import { tenantDb } from "@/lib/tenant-db";
+import { withRlsBypass } from "@/lib/rls";
 
 type TestEntities = {
   tenantId: string;
@@ -22,109 +23,118 @@ async function createTenantFixture(label: string): Promise<TestEntities> {
   const itemCode = `${label}-${suffix}-${Date.now()}`;
 
   const cnpjSeed = `${Date.now()}${Math.floor(Math.random() * 1000)}`.slice(0, 14);
-  const tenant = await prisma.tenant.create({
-    data: {
-      companyName: `${label} Co`,
-      legalName: `${label} Ltda`,
-      tradeName: `${label} Trade`,
-      cnpj: cnpjSeed.padStart(14, "0"),
-      businessAddress: "Rua 1",
-      neighborhood: "Centro",
-      city: "Sao Paulo",
-      state: "SP",
-      zipCode: "01000-000",
-      stateRegistration: "ISENTO",
-      printerLimit: 5,
-      subscriptionStatus: "active",
-    },
-  });
+  const created = await withRlsBypass(async (tx) => {
+    const tenant = await tx.tenant.create({
+      data: {
+        companyName: `${label} Co`,
+        legalName: `${label} Ltda`,
+        tradeName: `${label} Trade`,
+        cnpj: cnpjSeed.padStart(14, "0"),
+        businessAddress: "Rua 1",
+        neighborhood: "Centro",
+        city: "Sao Paulo",
+        state: "SP",
+        zipCode: "01000-000",
+        stateRegistration: "ISENTO",
+        printerLimit: 5,
+        subscriptionStatus: "active",
+      },
+    });
 
-  const user = await prisma.user.create({
-    data: {
-      tenantId: tenant.id,
-      name: `${label} User`,
-      email,
-      username: email,
-      passwordHash: "test-hash",
-      role: "ADMIN",
-      unit: unitName,
-    },
-  });
+    await tx.$executeRaw`select set_config('app.tenant_id', ${tenant.id}, true)`;
 
-  const unit = await prisma.unit.create({
-    data: {
-      tenantId: tenant.id,
-      name: unitName,
-      email,
-      phone: "11999999999",
-      managerName: `${label} Manager`,
-    },
-  });
+    const user = await tx.user.create({
+      data: {
+        tenantId: tenant.id,
+        name: `${label} User`,
+        email,
+        username: email,
+        passwordHash: "test-hash",
+        role: "ADMIN",
+        unit: unitName,
+      },
+    });
 
-  const group = await prisma.itemGroup.create({
-    data: {
-      tenantId: tenant.id,
-      name: groupName,
-    },
-  });
+    const unit = await tx.unit.create({
+      data: {
+        tenantId: tenant.id,
+        name: unitName,
+        email,
+        phone: "11999999999",
+        managerName: `${label} Manager`,
+      },
+    });
 
-  const item = await prisma.item.create({
-    data: {
-      tenantId: tenant.id,
-      itemCode,
-      name: itemName,
-      type: "GERAL",
-      groupId: group.id,
-      methodQuente: true,
-      selectedMethods: ["QUENTE"],
-      preferredStorageMethod: "QUENTE",
-    },
-  });
+    const group = await tx.itemGroup.create({
+      data: {
+        tenantId: tenant.id,
+        name: groupName,
+      },
+    });
 
-  const printer = await prisma.printerConfig.create({
-    data: {
-      tenantId: tenant.id,
-      name: `${label} Printer`,
-      unit: unitName,
-      apiKey: "pn_test",
-      printerId: 123,
-      isActive: true,
-      userId: user.id,
-    },
-  });
+    const item = await tx.item.create({
+      data: {
+        tenantId: tenant.id,
+        itemCode,
+        name: itemName,
+        type: "GERAL",
+        groupId: group.id,
+        methodQuente: true,
+        selectedMethods: ["QUENTE"],
+        preferredStorageMethod: "QUENTE",
+      },
+    });
 
-  const print = await prisma.labelPrint.create({
-    data: {
-      tenantId: tenant.id,
-      itemId: item.id,
-      storageMethod: "QUENTE",
-      producedAt: new Date(),
-      expiresAt: new Date(Date.now() + 60 * 60 * 1000),
-      userId: user.id,
-      quantity: 1,
-    },
+    const printer = await tx.printerConfig.create({
+      data: {
+        tenantId: tenant.id,
+        name: `${label} Printer`,
+        unit: unitName,
+        apiKey: "pn_test",
+        printerId: 123,
+        isActive: true,
+        userId: user.id,
+      },
+    });
+
+    const print = await tx.labelPrint.create({
+      data: {
+        tenantId: tenant.id,
+        itemId: item.id,
+        storageMethod: "QUENTE",
+        producedAt: new Date(),
+        expiresAt: new Date(Date.now() + 60 * 60 * 1000),
+        userId: user.id,
+        quantity: 1,
+      },
+    });
+
+    return { tenant, user, unit, group, item, printer, print };
   });
 
   return {
-    tenantId: tenant.id,
-    userId: user.id,
-    groupId: group.id,
-    itemId: item.id,
-    unitId: unit.id,
-    printerId: printer.id,
-    printId: print.id,
+    tenantId: created.tenant.id,
+    userId: created.user.id,
+    groupId: created.group.id,
+    itemId: created.item.id,
+    unitId: created.unit.id,
+    printerId: created.printer.id,
+    printId: created.print.id,
   };
 }
 
 async function cleanupFixture(tenantId: string) {
-  await prisma.labelPrint.deleteMany({ where: { tenantId } });
-  await prisma.printerConfig.deleteMany({ where: { tenantId } });
-  await prisma.item.deleteMany({ where: { tenantId } });
-  await prisma.itemGroup.deleteMany({ where: { tenantId } });
-  await prisma.unit.deleteMany({ where: { tenantId } });
-  await prisma.user.deleteMany({ where: { tenantId } });
-  await prisma.method.deleteMany({ where: { tenantId } });
-  await prisma.tenant.deleteMany({ where: { id: tenantId } });
+  await withRlsBypass(async (tx) => {
+    await tx.$executeRaw`select set_config('app.tenant_id', ${tenantId}, true)`;
+    await tx.labelPrint.deleteMany({ where: { tenantId } });
+    await tx.printerConfig.deleteMany({ where: { tenantId } });
+    await tx.item.deleteMany({ where: { tenantId } });
+    await tx.itemGroup.deleteMany({ where: { tenantId } });
+    await tx.unit.deleteMany({ where: { tenantId } });
+    await tx.user.deleteMany({ where: { tenantId } });
+    await tx.method.deleteMany({ where: { tenantId } });
+    await tx.tenant.deleteMany({ where: { id: tenantId } });
+  });
 }
 
 async function main() {

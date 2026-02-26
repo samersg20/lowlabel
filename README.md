@@ -23,6 +23,17 @@ npm run dev
 
 > MigraÃ§Ãµes foram resetadas para endurecimento multi-tenant. Em um banco descartÃ¡vel, rode `npx prisma migrate dev --name init` para recriar o esquema limpo.
 
+## Row Level Security (RLS)
+- As tabelas multi-tenant usam RLS no Postgres com a variÃ¡vel `app.tenant_id`.
+- Cada request autenticada usa `tenantDb(tenantId)` que seta `app.tenant_id` antes das queries.
+- Fluxos pÃºblicos (register/forgot/reset/stripe webhook) usam `app.bypass_rls=1` apenas dentro de transaÃ§Ãµes controladas.
+
+Debug rÃ¡pido (psql):
+```sql
+select set_config('app.tenant_id','TENANT_ID', true);
+select current_setting('app.tenant_id', true);
+```
+
 > No deploy com PostgreSQL, o build aplica `prisma migrate deploy` e depois executa seed automaticamente.
 > Para build local sem executar seed, use: `SKIP_DB_SEED=1 npm run build`.
 > Se quiser falhar o build quando o banco estiver indisponível no deploy, defina: `STRICT_DB_MIGRATE=1`.

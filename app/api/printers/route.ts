@@ -1,6 +1,6 @@
 import { tenantDb } from "@/lib/tenant-db";
 import { requireTenantSession } from "@/lib/tenant";
-import { prisma } from "@/lib/prisma";
+import { requireUnitForTenant } from "@/lib/unit-validation";
 import { NextResponse } from "next/server";
 
 export async function GET() {
@@ -27,11 +27,17 @@ export async function POST(req: Request) {
   const printerId = Number(body.printerId);
 
   if (!unit || !name || !apiKey || !Number.isInteger(printerId) || printerId <= 0) {
-    return NextResponse.json({ error: "Dados inválidos" }, { status: 400 });
+    return NextResponse.json({ error: "Dados invÃ¡lidos" }, { status: 400 });
   }
 
   const db = tenantDb(scoped.tenantId);
-  const tenant = await prisma.tenant.findUnique({ where: { id: scoped.tenantId } });
+  try {
+    await requireUnitForTenant(scoped.tenantId, unit);
+  } catch {
+    return NextResponse.json({ error: "Unidade invÃ¡lida" }, { status: 400 });
+  }
+
+  const tenant = await db.tenant.findFirst({ where: { id: scoped.tenantId } });
   const currentCount = await db.printerConfig.count();
   if (tenant && currentCount >= tenant.printerLimit) {
     return NextResponse.json({ error: `Limite de impressoras atingido no plano (${tenant.printerLimit})` }, { status: 400 });

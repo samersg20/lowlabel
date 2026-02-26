@@ -1,5 +1,6 @@
 import { tenantDb } from "@/lib/tenant-db";
 import { requireTenantSession } from "@/lib/tenant";
+import { requireUnitForTenant } from "@/lib/unit-validation";
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 
@@ -9,12 +10,20 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
   if (scoped.session.user.role !== "ADMIN") return NextResponse.json({ error: "forbidden" }, { status: 403 });
 
   const body = await req.json();
+  const unit = typeof body.unit === "string" ? body.unit.trim().toUpperCase() : undefined;
+  if (unit) {
+    try {
+      await requireUnitForTenant(scoped.tenantId, unit);
+    } catch {
+      return NextResponse.json({ error: "Unidade invÃ¡lida" }, { status: 400 });
+    }
+  }
   const data: any = {
     name: body.name,
     email: body.email,
     username: body.email,
     role: body.role,
-    unit: body.unit,
+    ...(unit ? { unit } : {}),
   };
   if (body.password) data.passwordHash = await bcrypt.hash(body.password, 10);
 

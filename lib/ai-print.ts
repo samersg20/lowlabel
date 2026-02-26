@@ -2,6 +2,7 @@ import { STORAGE_METHOD_RULES, STORAGE_METHODS, type StorageMethod } from "@/lib
 import { tenantDb } from "@/lib/tenant-db";
 import { makeZplLabel } from "@/lib/zpl";
 import { submitRawZplToPrintNode } from "@/lib/printnode";
+import { requireUnitForTenant } from "@/lib/unit-validation";
 
 type AiOrder = { itemId?: string; quantity?: number; itemName?: string };
 
@@ -88,6 +89,12 @@ export async function processAiPrintOrder({
 }) {
   const parsedOrders = await parseAiPrintOrder({ input, model, maxQuantity, tenantId: sessionUser.tenantId });
   const db = tenantDb(sessionUser.tenantId);
+
+  try {
+    await requireUnitForTenant(sessionUser.tenantId, sessionUser.unit);
+  } catch {
+    throw new Error("Unidade invÃ¡lida");
+  }
 
   const printerConfig = await db.printerConfig.findFirst({ where: { unit: sessionUser.unit, isActive: true } });
   const results: Array<{ itemName: string; quantity: number; method: string; jobIds: number[] }> = [];

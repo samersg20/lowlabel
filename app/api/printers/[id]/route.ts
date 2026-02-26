@@ -1,5 +1,6 @@
 import { tenantDb } from "@/lib/tenant-db";
 import { requireTenantSession } from "@/lib/tenant";
+import { requireUnitForTenant } from "@/lib/unit-validation";
 import { NextResponse } from "next/server";
 
 export async function PUT(req: Request, { params }: { params: { id: string } }) {
@@ -9,7 +10,15 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
 
   const body = await req.json();
   const updateData: any = {};
-  if (typeof body.unit === "string" && body.unit.trim()) updateData.unit = body.unit.trim().toUpperCase();
+  if (typeof body.unit === "string" && body.unit.trim()) {
+    const unit = body.unit.trim().toUpperCase();
+    try {
+      await requireUnitForTenant(scoped.tenantId, unit);
+    } catch {
+      return NextResponse.json({ error: "Unidade invÃ¡lida" }, { status: 400 });
+    }
+    updateData.unit = unit;
+  }
   if (typeof body.name === "string" && body.name.trim()) updateData.name = body.name.trim();
   if (typeof body.apiKey === "string" && body.apiKey.trim()) updateData.apiKey = body.apiKey.trim();
   if (body.printerId != null) {
