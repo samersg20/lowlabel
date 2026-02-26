@@ -5,6 +5,7 @@ type TenantId = string;
 const TENANT_MODELS = new Set([
   "User",
   "Item",
+  "ItemAlias",
   "Method",
   "Unit",
   "ItemGroup",
