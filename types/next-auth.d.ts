@@ -8,7 +8,7 @@ declare module "next-auth" {
       email: string;
       role: string;
       unit: string;
-      tenantId?: string;
+      tenantId: string;
       companyName?: string;
     } & DefaultSession["user"];
   }
@@ -16,7 +16,7 @@ declare module "next-auth" {
   interface User {
     role: string;
     unit: string;
-    tenantId?: string;
+    tenantId: string;
     companyName?: string;
   }
 }
@@ -26,7 +26,7 @@ declare module "next-auth/jwt" {
     id: string;
     role: string;
     unit: string;
-    tenantId?: string;
+    tenantId: string;
     companyName?: string;
   }
 }

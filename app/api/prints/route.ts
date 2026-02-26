@@ -1,5 +1,5 @@
-import { auth } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
+import { tenantDb } from "@/lib/tenant-db";
+import { requireTenantSession } from "@/lib/tenant";
 import { NextResponse } from "next/server";
 import { STORAGE_METHOD_RULES } from "@/lib/constants";
 import { submitRawZplToPrintNode } from "@/lib/printnode";
@@ -18,8 +18,8 @@ function legacyMethods(item: any) {
 
 export async function POST(req: Request) {
   try {
-    const session = await auth();
-    if (!session?.user) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+    const scoped = await requireTenantSession();
+    if ("error" in scoped) return scoped.error;
 
     const body = await req.json();
     const quantity = Number(body.quantity);
@@ -28,7 +28,8 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Dados inválidos (itemId/storageMethod/quantity)" }, { status: 400 });
     }
 
-    const item = await prisma.item.findFirst({ where: { id: body.itemId, tenantId: session.user.tenantId } });
+    const db = tenantDb(scoped.tenantId);
+    const item = await db.item.findFirst({ where: { id: body.itemId } });
     if (!item) return NextResponse.json({ error: "Item não encontrado" }, { status: 404 });
 
     const selectedMethods = (Array.isArray(item.selectedMethods) && item.selectedMethods.length
@@ -40,8 +41,8 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Método não habilitado para este item" }, { status: 400 });
     }
 
-    const methodConfig = await prisma.method.findFirst({
-      where: { tenantId: session.user.tenantId, name: requestedMethod },
+    const methodConfig = await db.method.findFirst({
+      where: { name: requestedMethod },
       select: { durationValue: true, durationUnit: true },
     });
 
@@ -54,21 +55,21 @@ export async function POST(req: Request) {
     const multiplier = unit === "hours" ? 60 * 60 * 1000 : 24 * 60 * 60 * 1000;
     const expiresAt = new Date(producedAt.getTime() + amount * multiplier);
 
-    const print = await prisma.labelPrint.create({
+    const print = await db.labelPrint.create({
       data: {
-        tenantId: session.user.tenantId,
+        tenantId: scoped.tenantId,
         itemId: item.id,
         storageMethod: requestedMethod as any,
         producedAt,
         expiresAt,
-        userId: session.user.id,
+        userId: scoped.session.user.id,
         quantity,
       },
     });
 
-    const zpl = makeZplLabel({ name: item.name, storageMethod: requestedMethod as any, producedAt, expiresAt, userName: session.user.name || "ADMIN", sif: item.sif });
+    const zpl = makeZplLabel({ name: item.name, storageMethod: requestedMethod as any, producedAt, expiresAt, userName: scoped.session.user.name || "ADMIN", sif: item.sif });
 
-    const printerConfig = await prisma.printerConfig.findFirst({ where: { tenantId: session.user.tenantId, unit: session.user.unit, isActive: true } });
+    const printerConfig = await db.printerConfig.findFirst({ where: { unit: scoped.session.user.unit, isActive: true } });
 
     const printerId = printerConfig?.printerId || Number(process.env.PRINTNODE_PRINTER_ID || process.env.PRINTNODE_PRINT_ID || 0);
     const apiKey = printerConfig?.apiKey || process.env.PRINTNODE_API_KEY || "";

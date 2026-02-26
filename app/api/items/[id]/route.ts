@@ -1,5 +1,5 @@
-import { auth } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
+import { tenantDb } from "@/lib/tenant-db";
+import { requireTenantSession } from "@/lib/tenant";
 import { NextResponse } from "next/server";
 
 type LegacyFlags = {
@@ -55,9 +55,9 @@ function legacyFlagsFromSelected(selectedMethods: string[]) {
 }
 
 export async function PUT(req: Request, { params }: { params: { id: string } }) {
-  const session = await auth();
-  if (!session?.user) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
-  if (session.user.role !== "ADMIN") return NextResponse.json({ error: "forbidden" }, { status: 403 });
+  const scoped = await requireTenantSession();
+  if ("error" in scoped) return scoped.error;
+  if (scoped.session.user.role !== "ADMIN") return NextResponse.json({ error: "forbidden" }, { status: 403 });
 
   const body = await req.json();
 
@@ -72,8 +72,9 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
 
   const flags = legacyFlagsFromSelected(selectedMethods);
 
-  const updated = await prisma.item.updateMany({
-    where: { id: params.id, tenantId: session.user.tenantId },
+  const db = tenantDb(scoped.tenantId);
+  const updated = await db.item.updateMany({
+    where: { id: params.id },
     data: {
       name: String(body.name || "").trim().toUpperCase(),
       groupId: body.groupId || null,
@@ -91,16 +92,17 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
   });
 
   if (!updated.count) return NextResponse.json({ error: "not_found" }, { status: 404 });
-  const row = await prisma.item.findUnique({ where: { id: params.id }, include: { group: true } });
+  const row = await db.item.findFirst({ where: { id: params.id }, include: { group: true } });
   return NextResponse.json(row);
 }
 
 export async function DELETE(_req: Request, { params }: { params: { id: string } }) {
-  const session = await auth();
-  if (!session?.user) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
-  if (session.user.role !== "ADMIN") return NextResponse.json({ error: "forbidden" }, { status: 403 });
+  const scoped = await requireTenantSession();
+  if ("error" in scoped) return scoped.error;
+  if (scoped.session.user.role !== "ADMIN") return NextResponse.json({ error: "forbidden" }, { status: 403 });
 
-  const deleted = await prisma.item.deleteMany({ where: { id: params.id, tenantId: session.user.tenantId } });
+  const db = tenantDb(scoped.tenantId);
+  const deleted = await db.item.deleteMany({ where: { id: params.id } });
   if (!deleted.count) return NextResponse.json({ error: "not_found" }, { status: 404 });
   return NextResponse.json({ ok: true });
 }

@@ -1,5 +1,5 @@
-import { auth } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
+import { tenantDb } from "@/lib/tenant-db";
+import { requireTenantSession } from "@/lib/tenant";
 import { NextResponse } from "next/server";
 import { generateUniqueItemCode } from "@/lib/item-code";
 
@@ -56,14 +56,15 @@ function legacyFlagsFromSelected(selectedMethods: string[]) {
 }
 
 export async function GET(req: Request) {
-  const session = await auth();
-  if (!session?.user) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  const scoped = await requireTenantSession();
+  if ("error" in scoped) return scoped.error;
 
   const { searchParams } = new URL(req.url);
   const groupId = searchParams.get("groupId");
 
-  const items = await prisma.item.findMany({
-    where: { tenantId: session.user.tenantId, ...(groupId ? { groupId } : {}) },
+  const db = tenantDb(scoped.tenantId);
+  const items = await db.item.findMany({
+    where: { ...(groupId ? { groupId } : {}) },
     include: { group: true },
     orderBy: { name: "asc" },
   });
@@ -72,9 +73,9 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
-  const session = await auth();
-  if (!session?.user) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
-  if (session.user.role !== "ADMIN") return NextResponse.json({ error: "forbidden" }, { status: 403 });
+  const scoped = await requireTenantSession();
+  if ("error" in scoped) return scoped.error;
+  if (scoped.session.user.role !== "ADMIN") return NextResponse.json({ error: "forbidden" }, { status: 403 });
 
   const body = await req.json();
   let selectedMethods: string[];
@@ -88,9 +89,10 @@ export async function POST(req: Request) {
 
   const flags = legacyFlagsFromSelected(selectedMethods);
 
-  const created = await prisma.item.create({
+  const db = tenantDb(scoped.tenantId);
+  const created = await db.item.create({
     data: {
-      tenantId: session.user.tenantId,
+      tenantId: scoped.tenantId,
       itemCode: await generateUniqueItemCode(),
       name: String(body.name || "").trim().toUpperCase(),
       type: "GERAL",

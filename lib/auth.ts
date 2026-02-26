@@ -33,7 +33,7 @@ export const authOptions: NextAuthOptions = {
           email: user.email,
           role: user.role,
           unit: user.unit,
-          tenantId: user.tenantId || undefined,
+          tenantId: user.tenantId,
           companyName: user.tenant?.tradeName || user.tenant?.companyName || undefined,
         } as any;
       },
@@ -56,7 +56,7 @@ export const authOptions: NextAuthOptions = {
         session.user.id = token.id as string;
         session.user.role = token.role as string;
         session.user.unit = token.unit as string;
-        session.user.tenantId = token.tenantId as string | undefined;
+        session.user.tenantId = token.tenantId as string;
         session.user.companyName = token.companyName as string | undefined;
       }
       return session;

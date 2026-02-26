@@ -1,20 +1,22 @@
-import { auth } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
+import { tenantDb } from "@/lib/tenant-db";
+import { requireTenantSession } from "@/lib/tenant";
 import { NextResponse } from "next/server";
 
 export async function GET() {
-  const session = await auth();
-  if (!session?.user) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
-  const groups = await prisma.itemGroup.findMany({ where: { tenantId: session.user.tenantId }, orderBy: { name: "asc" } });
+  const scoped = await requireTenantSession();
+  if ("error" in scoped) return scoped.error;
+  const db = tenantDb(scoped.tenantId);
+  const groups = await db.itemGroup.findMany({ orderBy: { name: "asc" } });
   return NextResponse.json(groups);
 }
 
 export async function POST(req: Request) {
-  const session = await auth();
-  if (!session?.user) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
-  if (session.user.role !== "ADMIN") return NextResponse.json({ error: "forbidden" }, { status: 403 });
+  const scoped = await requireTenantSession();
+  if ("error" in scoped) return scoped.error;
+  if (scoped.session.user.role !== "ADMIN") return NextResponse.json({ error: "forbidden" }, { status: 403 });
 
   const body = await req.json();
-  const created = await prisma.itemGroup.create({ data: { tenantId: session.user.tenantId, name: String(body.name || "").trim().toUpperCase() } });
+  const db = tenantDb(scoped.tenantId);
+  const created = await db.itemGroup.create({ data: { tenantId: scoped.tenantId, name: String(body.name || "").trim().toUpperCase() } });
   return NextResponse.json(created);
 }
