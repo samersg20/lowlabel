@@ -13,7 +13,7 @@ type Printer = {
 
 const emptyForm = {
   name: "",
-  unit: "BROOKLIN",
+  unit: "",
   printerId: "",
   apiKey: "",
   isActive: true,
@@ -21,7 +21,7 @@ const emptyForm = {
 
 export default function PrintersPage() {
   const [rows, setRows] = useState<Printer[]>([]);
-  const [units, setUnits] = useState<string[]>(["BROOKLIN", "PINHEIROS"]);
+  const [units, setUnits] = useState<string[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<any>(emptyForm);
   const [error, setError] = useState("");
@@ -33,7 +33,9 @@ export default function PrintersPage() {
     const unitsRes = await fetch("/api/units");
     const unitsData = await unitsRes.json().catch(() => []);
     if (Array.isArray(unitsData) && unitsData.length) {
-      setUnits(unitsData.map((u: any) => u.name));
+      const names = unitsData.map((u: any) => u.name);
+      setUnits(names);
+      setForm((prev: any) => ({ ...prev, unit: prev.unit || names[0] || "" }));
     }
   }
 

@@ -32,7 +32,7 @@ CREATE TABLE "User" (
     "image" TEXT,
     "passwordHash" TEXT NOT NULL,
     "role" TEXT NOT NULL DEFAULT 'OPERATOR',
-    "unit" TEXT NOT NULL DEFAULT 'BROOKLIN',
+    "unit" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 

@@ -85,7 +85,7 @@ Checklist rápido:
 ## Módulos
 - `/items`: cadastro e filtro de itens por grupo, com importação/exportação em XLSX
 - `/groups`: cadastro/edição de grupos
-- `/users`: cadastro/edição de usuários com unidade BROOKLIN/PINHEIROS
+- `/users`: cadastro/edição de usuários com unidade
 - `/printers`: cadastro de impressoras por unidade (API key + printer id PrintNode)
 
 
