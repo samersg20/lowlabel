@@ -31,6 +31,7 @@ model Tenant {
   printers             PrinterConfig[]
   units                Unit[]
   users                User[]
+  aliases              ItemAlias[]
 }
 
 model User {
@@ -83,6 +84,7 @@ model Item {
   group                  ItemGroup?   @relation(fields: [groupId], references: [id])
   tenant                 Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   prints                 LabelPrint[]
+  aliases                ItemAlias[]
 
   @@index([tenantId])
 }
