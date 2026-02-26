@@ -4,7 +4,6 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
 
 model Tenant {
@@ -36,8 +35,8 @@ model Tenant {
 
 model User {
   id            String       @id @default(cuid())
-  tenantId      String?
-  tenant        Tenant?      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tenantId      String
+  tenant        Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   name          String
   email         String       @unique
   username      String?      @unique
@@ -59,8 +58,8 @@ model User {
 
 model Item {
   id           String      @id @default(cuid())
-  tenantId     String?
-  tenant       Tenant?     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tenantId     String
+  tenant       Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   itemCode     String      @unique
   name         String
   type         String      @default("GERAL")
@@ -90,8 +89,8 @@ model Item {
 
 model Method {
   id            Int      @id @default(autoincrement())
-  tenantId      String?
-  tenant        Tenant?  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tenantId      String
+  tenant        Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   name          String
   durationValue Int
   durationUnit  String
@@ -103,8 +102,8 @@ model Method {
 
 model Unit {
   id          String   @id @default(cuid())
-  tenantId    String?
-  tenant      Tenant?  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tenantId    String
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   name        String
   email       String
   phone       String
@@ -117,8 +116,8 @@ model Unit {
 
 model ItemGroup {
   id        String   @id @default(cuid())
-  tenantId  String?
-  tenant    Tenant?  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tenantId  String
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   name      String
   items     Item[]
   createdAt DateTime @default(now())
@@ -129,8 +128,8 @@ model ItemGroup {
 
 model PrinterConfig {
   id        String   @id @default(cuid())
-  tenantId  String?
-  tenant    Tenant?  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tenantId  String
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   name      String
   unit      String
   apiKey    String
@@ -158,8 +157,8 @@ model PasswordResetToken {
 
 model LabelPrint {
   id            String        @id @default(cuid())
-  tenantId      String?
-  tenant        Tenant?       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tenantId      String
+  tenant        Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   itemId        String
   item          Item          @relation(fields: [itemId], references: [id], onDelete: Restrict)
   storageMethod String

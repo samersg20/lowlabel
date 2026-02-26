@@ -21,6 +21,8 @@ npx prisma migrate dev --name init
 npm run dev
 ```
 
+> MigraÃ§Ãµes foram resetadas para endurecimento multi-tenant. Em um banco descartÃ¡vel, rode `npx prisma migrate dev --name init` para recriar o esquema limpo.
+
 > No deploy com PostgreSQL, o build aplica `prisma migrate deploy` e depois executa seed automaticamente.
 > Para build local sem executar seed, use: `SKIP_DB_SEED=1 npm run build`.
 > Se quiser falhar o build quando o banco estiver indisponível no deploy, defina: `STRICT_DB_MIGRATE=1`.

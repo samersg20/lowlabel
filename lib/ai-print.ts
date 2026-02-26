@@ -1,11 +1,11 @@
 import { STORAGE_METHOD_RULES, STORAGE_METHODS, type StorageMethod } from "@/lib/constants";
-import { prisma } from "@/lib/prisma";
+import { tenantDb } from "@/lib/tenant-db";
 import { makeZplLabel } from "@/lib/zpl";
 import { submitRawZplToPrintNode } from "@/lib/printnode";
 
 type AiOrder = { itemId?: string; quantity?: number; itemName?: string };
 
-type SessionUser = { id: string; name: string; unit: string; tenantId?: string };
+type SessionUser = { id: string; name: string; unit: string; tenantId: string };
 
 function enabledMethodsForItem(item: any): StorageMethod[] {
   const methods: StorageMethod[] = [];
@@ -87,8 +87,9 @@ export async function processAiPrintOrder({
   maxQuantity: number;
 }) {
   const parsedOrders = await parseAiPrintOrder({ input, model, maxQuantity, tenantId: sessionUser.tenantId });
+  const db = tenantDb(sessionUser.tenantId);
 
-  const printerConfig = await prisma.printerConfig.findFirst({ where: { tenantId: sessionUser.tenantId, unit: sessionUser.unit, isActive: true } });
+  const printerConfig = await db.printerConfig.findFirst({ where: { unit: sessionUser.unit, isActive: true } });
   const results: Array<{ itemName: string; quantity: number; method: string; jobIds: number[] }> = [];
 
   for (const parsed of parsedOrders) {
@@ -97,7 +98,7 @@ export async function processAiPrintOrder({
     const multiplier = rule.unit === "hours" ? 60 * 60 * 1000 : 24 * 60 * 60 * 1000;
     const expiresAt = new Date(producedAt.getTime() + rule.amount * multiplier);
 
-    await prisma.labelPrint.create({
+    await db.labelPrint.create({
       data: {
         tenantId: sessionUser.tenantId,
         itemId: parsed.item.id,
@@ -140,10 +141,10 @@ export async function parseAiPrintOrder({
   input: string;
   model: string;
   maxQuantity: number;
-  tenantId?: string;
+  tenantId: string;
 }) {
-  const items = await prisma.item.findMany({
-    where: tenantId ? { tenantId } : undefined,
+  const db = tenantDb(tenantId);
+  const items = await db.item.findMany({
     select: {
       id: true,
       name: true,

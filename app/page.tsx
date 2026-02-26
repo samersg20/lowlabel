@@ -1,6 +1,6 @@
 import { auth } from "@/lib/auth";
 import { addDaysToDateKey, getSaoPauloDayRange, nowInSaoPauloDateKey } from "@/lib/date";
-import { prisma } from "@/lib/prisma";
+import { tenantDb } from "@/lib/tenant-db";
 
 export default async function Home() {
   const session = await auth();
@@ -13,6 +13,14 @@ export default async function Home() {
       </div>
     );
   }
+  if (!session.user.tenantId) {
+    return (
+      <div className="card" style={{ textAlign: "center" }}>
+        <h1>Conta sem tenant</h1>
+        <p>Entre em contato com o suporte para configurar sua empresa.</p>
+      </div>
+    );
+  }
 
   const todayKey = nowInSaoPauloDateKey();
   const tomorrowKey = addDaysToDateKey(todayKey, 1);
@@ -20,11 +28,13 @@ export default async function Home() {
   const tomorrowRange = getSaoPauloDayRange(tomorrowKey);
   const unitShort = String(session.user.unit || "").slice(0, 3).toUpperCase();
 
+  const db = tenantDb(session.user.tenantId);
+
   const [totalHoje, totalHojeUnidade, vencendoHoje, vencendoAmanha] = await Promise.all([
-    prisma.labelPrint.count({ where: { createdAt: { gte: todayRange.start, lte: todayRange.end } } }),
-    prisma.labelPrint.count({ where: { createdAt: { gte: todayRange.start, lte: todayRange.end }, user: { unit: session.user.unit } } }),
-    prisma.labelPrint.count({ where: { expiresAt: { gte: todayRange.start, lte: todayRange.end } } }),
-    prisma.labelPrint.count({ where: { expiresAt: { gte: tomorrowRange.start, lte: tomorrowRange.end } } }),
+    db.labelPrint.count({ where: { createdAt: { gte: todayRange.start, lte: todayRange.end } } }),
+    db.labelPrint.count({ where: { createdAt: { gte: todayRange.start, lte: todayRange.end }, user: { unit: session.user.unit, tenantId: session.user.tenantId } } }),
+    db.labelPrint.count({ where: { expiresAt: { gte: todayRange.start, lte: todayRange.end } } }),
+    db.labelPrint.count({ where: { expiresAt: { gte: tomorrowRange.start, lte: tomorrowRange.end } } }),
   ]);
 
   return (

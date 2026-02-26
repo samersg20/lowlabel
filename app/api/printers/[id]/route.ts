@@ -1,11 +1,11 @@
-import { auth } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
+import { tenantDb } from "@/lib/tenant-db";
+import { requireTenantSession } from "@/lib/tenant";
 import { NextResponse } from "next/server";
 
 export async function PUT(req: Request, { params }: { params: { id: string } }) {
-  const session = await auth();
-  if (!session?.user) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
-  if (session.user.role !== "ADMIN") return NextResponse.json({ error: "forbidden" }, { status: 403 });
+  const scoped = await requireTenantSession();
+  if ("error" in scoped) return scoped.error;
+  if (scoped.session.user.role !== "ADMIN") return NextResponse.json({ error: "forbidden" }, { status: 403 });
 
   const body = await req.json();
   const updateData: any = {};
@@ -19,18 +19,20 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
   }
   if (typeof body.isActive === "boolean") updateData.isActive = body.isActive;
 
-  const updated = await prisma.printerConfig.updateMany({ where: { id: params.id, tenantId: session.user.tenantId }, data: updateData });
+  const db = tenantDb(scoped.tenantId);
+  const updated = await db.printerConfig.updateMany({ where: { id: params.id }, data: updateData });
   if (!updated.count) return NextResponse.json({ error: "not_found" }, { status: 404 });
-  const row = await prisma.printerConfig.findUnique({ where: { id: params.id }, select: { id: true, unit: true, name: true, printerId: true, isActive: true, createdAt: true } });
+  const row = await db.printerConfig.findFirst({ where: { id: params.id }, select: { id: true, unit: true, name: true, printerId: true, isActive: true, createdAt: true } });
   return NextResponse.json(row);
 }
 
 export async function DELETE(_req: Request, { params }: { params: { id: string } }) {
-  const session = await auth();
-  if (!session?.user) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
-  if (session.user.role !== "ADMIN") return NextResponse.json({ error: "forbidden" }, { status: 403 });
+  const scoped = await requireTenantSession();
+  if ("error" in scoped) return scoped.error;
+  if (scoped.session.user.role !== "ADMIN") return NextResponse.json({ error: "forbidden" }, { status: 403 });
 
-  const deleted = await prisma.printerConfig.deleteMany({ where: { id: params.id, tenantId: session.user.tenantId } });
+  const db = tenantDb(scoped.tenantId);
+  const deleted = await db.printerConfig.deleteMany({ where: { id: params.id } });
   if (!deleted.count) return NextResponse.json({ error: "not_found" }, { status: 404 });
   return NextResponse.json({ ok: true });
 }

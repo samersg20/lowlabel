@@ -1,12 +1,12 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { requireTenantSession } from "@/lib/tenant";
 
 const OPENAI_TRANSCRIBE_MODEL = process.env.OPENAI_TRANSCRIBE_MODEL || "gpt-4o-mini-transcribe";
 
 export async function POST(req: Request) {
   try {
-    const session = await auth();
-    if (!session?.user) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+    const scoped = await requireTenantSession();
+    if ("error" in scoped) return scoped.error;
 
     const form = await req.formData();
     const file = form.get("audio");
