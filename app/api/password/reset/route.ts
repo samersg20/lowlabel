@@ -1,7 +1,7 @@
 import bcrypt from "bcryptjs";
 import { NextResponse } from "next/server";
 import { hashResetToken } from "@/lib/password-reset";
-import { withRlsBypass } from "@/lib/rls";
+import { withRlsBypassTx } from "@/lib/tenant-tx";
 
 export async function POST(req: Request) {
   const body = await req.json().catch(() => ({}));
@@ -13,7 +13,7 @@ export async function POST(req: Request) {
   }
 
   const tokenHash = hashResetToken(token);
-  const result = await withRlsBypass(async (tx) => {
+  const result = await withRlsBypassTx(async ({ tx }) => {
     const resetToken = await tx.passwordResetToken.findUnique({ where: { tokenHash } });
     if (!resetToken || resetToken.expiresAt < new Date()) {
       return { ok: false as const };

@@ -81,17 +81,19 @@ export async function processAiPrintOrder({
   sessionUser,
   model,
   maxQuantity,
+  db: providedDb,
 }: {
   input: string;
   sessionUser: SessionUser;
   model: string;
   maxQuantity: number;
+  db?: any;
 }) {
-  const parsedOrders = await parseAiPrintOrder({ input, model, maxQuantity, tenantId: sessionUser.tenantId });
-  const db = tenantDb(sessionUser.tenantId);
+  const db = providedDb ?? tenantDb(sessionUser.tenantId);
+  const parsedOrders = await parseAiPrintOrder({ input, model, maxQuantity, tenantId: sessionUser.tenantId, db });
 
   try {
-    await requireUnitForTenant(sessionUser.tenantId, sessionUser.unit);
+    await requireUnitForTenant(db, sessionUser.unit);
   } catch {
     throw new Error("Unidade invÃ¡lida");
   }
@@ -144,14 +146,27 @@ export async function parseAiPrintOrder({
   model,
   maxQuantity,
   tenantId,
+  db: providedDb,
 }: {
   input: string;
   model: string;
   maxQuantity: number;
   tenantId: string;
+  db?: any;
 }) {
-  const db = tenantDb(tenantId);
-  const items = await db.item.findMany({
+  const db = providedDb ?? tenantDb(tenantId);
+  const items: Array<{
+    id: string;
+    name: string;
+    sif: string | null;
+    methodQuente: boolean;
+    methodPistaFria: boolean;
+    methodDescongelando: boolean;
+    methodResfriado: boolean;
+    methodCongelado: boolean;
+    methodAmbienteSecos: boolean;
+    preferredStorageMethod: string | null;
+  }> = await db.item.findMany({
     select: {
       id: true,
       name: true,

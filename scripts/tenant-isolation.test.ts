@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import { prisma } from "@/lib/prisma";
 import { tenantDb } from "@/lib/tenant-db";
-import { withRlsBypass } from "@/lib/rls";
+import { withRlsBypassTx } from "@/lib/tenant-tx";
 
 type TestEntities = {
   tenantId: string;
@@ -23,7 +23,7 @@ async function createTenantFixture(label: string): Promise<TestEntities> {
   const itemCode = `${label}-${suffix}-${Date.now()}`;
 
   const cnpjSeed = `${Date.now()}${Math.floor(Math.random() * 1000)}`.slice(0, 14);
-  const created = await withRlsBypass(async (tx) => {
+  const created = await withRlsBypassTx(async ({ tx }) => {
     const tenant = await tx.tenant.create({
       data: {
         companyName: `${label} Co`,
@@ -124,7 +124,7 @@ async function createTenantFixture(label: string): Promise<TestEntities> {
 }
 
 async function cleanupFixture(tenantId: string) {
-  await withRlsBypass(async (tx) => {
+  await withRlsBypassTx(async ({ tx }) => {
     await tx.$executeRaw`select set_config('app.tenant_id', ${tenantId}, true)`;
     await tx.labelPrint.deleteMany({ where: { tenantId } });
     await tx.printerConfig.deleteMany({ where: { tenantId } });

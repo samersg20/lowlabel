@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { createResetToken } from "@/lib/password-reset";
 import { sendResetPasswordEmail } from "@/lib/email";
-import { withRlsBypass } from "@/lib/rls";
+import { withRlsBypassTx } from "@/lib/tenant-tx";
 
 const EXPIRES_IN_MINUTES = 60;
 
@@ -14,7 +14,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "E-mail obrigatório" }, { status: 400 });
     }
 
-    const result = await withRlsBypass(async (tx) => {
+    const result = await withRlsBypassTx(async ({ tx }) => {
       const user = await tx.user.findUnique({ where: { email } });
       if (!user) return { user: null as any, rawToken: "" };
 

@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import { getAppBaseUrl, getStripeSecretKey } from "@/lib/stripe";
 import { isStrongPassword } from "@/lib/tenant";
-import { withRlsBypass } from "@/lib/rls";
+import { withRlsBypassTx } from "@/lib/tenant-tx";
 
 function normalize(input: unknown) {
   return String(input || "").trim();
@@ -59,7 +59,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Senha fraca. Use no mínimo 8 caracteres com letra, número e símbolo." }, { status: 400 });
     }
 
-    const existing = await withRlsBypass((tx) => tx.user.findFirst({ where: { email } }));
+    const existing = await withRlsBypassTx(({ tx }) => tx.user.findFirst({ where: { email } }));
     if (existing) return NextResponse.json({ error: "E-mail já cadastrado" }, { status: 409 });
 
     const passwordHash = await bcrypt.hash(password, 10);
