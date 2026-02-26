@@ -6,9 +6,9 @@ type User = { id: string; name: string; username?: string | null; email: string;
 
 export default function UsersPage() {
   const [users, setUsers] = useState<User[]>([]);
-  const [units, setUnits] = useState<string[]>(["BROOKLIN", "PINHEIROS"]);
+  const [units, setUnits] = useState<string[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [form, setForm] = useState({ name: "", username: "", email: "", password: "", role: "OPERATOR", unit: "BROOKLIN" });
+  const [form, setForm] = useState({ name: "", username: "", email: "", password: "", role: "OPERATOR", unit: "" });
 
   async function load() {
     const res = await fetch("/api/users");
@@ -16,7 +16,11 @@ export default function UsersPage() {
     const unitsRes = await fetch("/api/units");
     const unitsData = await unitsRes.json().catch(() => []);
     if (Array.isArray(unitsData) && unitsData.length) {
-      setUnits(unitsData.map((u: any) => u.name));
+      const names = unitsData.map((u: any) => u.name);
+      setUnits(names);
+      if (!editingId && !form.unit) {
+        setForm((prev) => ({ ...prev, unit: names[0] || "" }));
+      }
     }
   }
 
@@ -30,7 +34,7 @@ export default function UsersPage() {
       body: JSON.stringify({ ...form, username: form.username.trim() || null }),
     });
     setEditingId(null);
-    setForm({ name: "", username: "", email: "", password: "", role: "OPERATOR", unit: "BROOKLIN" });
+    setForm({ name: "", username: "", email: "", password: "", role: "OPERATOR", unit: units[0] || "" });
     load();
   }
 

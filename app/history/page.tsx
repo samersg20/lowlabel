@@ -18,16 +18,21 @@ export default function HistoryPage() {
   const [rows, setRows] = useState<Row[]>([]);
   const [items, setItems] = useState<{ id: string; name: string }[]>([]);
   const [users, setUsers] = useState<{ id: string; name: string }[]>([]);
+  const [units, setUnits] = useState<string[]>([]);
   const [filters, setFilters] = useState({ itemId: "", storageMethod: "", userId: "", unit: "TODAS", start: "", end: "" });
 
   async function loadFilters() {
-    const [itemsRes, historyRes] = await Promise.all([fetch("/api/items"), fetch("/api/history")]);
+    const [itemsRes, historyRes, unitsRes] = await Promise.all([fetch("/api/items"), fetch("/api/history"), fetch("/api/units")]);
     const itemList = await itemsRes.json();
     const history = await historyRes.json();
+    const unitsData = await unitsRes.json().catch(() => []);
     setItems(itemList.map((i: any) => ({ id: i.id, name: i.name })));
     setRows(history);
     const uniqueUsers = Array.from(new Map(history.map((r: any) => [r.user.id, r.user])).values()) as any;
     setUsers(uniqueUsers);
+    if (Array.isArray(unitsData)) {
+      setUnits(unitsData.map((u: any) => u.name));
+    }
   }
 
   useEffect(() => {
@@ -61,8 +66,7 @@ export default function HistoryPage() {
         </select>
         <select value={filters.unit} onChange={(e) => setFilters({ ...filters, unit: e.target.value })}>
           <option value="TODAS">Todas filiais</option>
-          <option value="BROOKLIN">BROOKLIN</option>
-          <option value="PINHEIROS">PINHEIROS</option>
+          {units.map((u) => <option key={u} value={u}>{u}</option>)}
         </select>
         <input type="date" value={filters.start} onChange={(e) => setFilters({ ...filters, start: e.target.value })} />
         <input type="date" value={filters.end} onChange={(e) => setFilters({ ...filters, end: e.target.value })} />
