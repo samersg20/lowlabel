@@ -31,6 +31,7 @@ model Tenant {
   printers             PrinterConfig[]
   units                Unit[]
   users                User[]
+  aliases              ItemAlias[]
 }
 
 model User {
@@ -83,6 +84,7 @@ model Item {
   group                  ItemGroup?   @relation(fields: [groupId], references: [id])
   tenant                 Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   prints                 LabelPrint[]
+  aliases                ItemAlias[]
 
   @@index([tenantId])
 }
@@ -124,6 +126,19 @@ model ItemGroup {
   tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   @@unique([tenantId, name])
+}
+
+model ItemAlias {
+  id        String   @id @default(cuid())
+  tenantId  String
+  alias     String
+  itemId    String
+  createdAt DateTime @default(now())
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  item   Item   @relation(fields: [itemId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, alias])
 }
 
 model PrinterConfig {
