@@ -7,82 +7,82 @@ datasource db {
 }
 
 model Tenant {
-  id                String          @id @default(cuid())
-  companyName       String
-  legalName         String?
-  tradeName         String?
-  cnpj              String?         @unique
-  businessAddress   String?
-  neighborhood      String?
-  city              String?
-  state             String?
-  zipCode           String?
-  stateRegistration String?
-  printerLimit      Int             @default(1)
-  stripeCustomerId  String?
+  id                   String          @id @default(cuid())
+  companyName          String
+  legalName            String?
+  tradeName            String?
+  cnpj                 String?         @unique
+  businessAddress      String?
+  neighborhood         String?
+  city                 String?
+  state                String?
+  zipCode              String?
+  stateRegistration    String?
+  printerLimit         Int             @default(1)
+  stripeCustomerId     String?
   stripeSubscriptionId String?
-  subscriptionStatus String?
-  users             User[]
-  items             Item[]
-  methods           Method[]
-  units             Unit[]
-  groups            ItemGroup[]
-  printers          PrinterConfig[]
-  prints            LabelPrint[]
-  createdAt         DateTime        @default(now())
-  updatedAt         DateTime        @updatedAt
+  subscriptionStatus   String?
+  createdAt            DateTime        @default(now())
+  updatedAt            DateTime        @updatedAt
+  items                Item[]
+  groups               ItemGroup[]
+  prints               LabelPrint[]
+  methods              Method[]
+  printers             PrinterConfig[]
+  units                Unit[]
+  users                User[]
 }
 
 model User {
-  id            String       @id @default(cuid())
-  tenantId      String
-  tenant        Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  name          String
-  email         String       @unique
-  username      String?      @unique
-  emailVerified DateTime?
-  image         String?
-  passwordHash  String
-  role          String       @default("OPERATOR")
-  unit          String       @default("BROOKLIN")
-  accounts      Account[]
-  sessions      Session[]
-  labelPrints   LabelPrint[]
-  printerConfigs PrinterConfig[]
+  id                  String               @id @default(cuid())
+  tenantId            String
+  name                String
+  email               String               @unique
+  username            String?              @unique
+  emailVerified       DateTime?
+  image               String?
+  passwordHash        String
+  role                String               @default("OPERATOR")
+  unit                String               @default("BROOKLIN")
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+  accounts            Account[]
+  labelPrints         LabelPrint[]
   passwordResetTokens PasswordResetToken[]
-  createdAt     DateTime     @default(now())
-  updatedAt     DateTime     @updatedAt
+  printerConfigs      PrinterConfig[]
+  sessions            Session[]
+  tenant              Tenant               @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   @@index([tenantId])
 }
 
 model Item {
-  id           String      @id @default(cuid())
-  tenantId     String
-  tenant       Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  itemCode     String      @unique
-  name         String
-  type         String      @default("GERAL")
-  groupId      String?
-  group        ItemGroup?  @relation(fields: [groupId], references: [id], onDelete: SetNull)
-  sif          String?
-  notes        String?
-  chilledHours        Int?
-  frozenHours         Int?
-  ambientHours        Int?
-  hotHours            Int?
-  thawingHours        Int?
-  methodQuente        Boolean @default(false)
-  methodPistaFria     Boolean @default(false)
-  methodDescongelando Boolean @default(false)
-  methodResfriado     Boolean @default(false)
-  methodCongelado     Boolean @default(false)
-  methodAmbienteSecos Boolean @default(false)
-  selectedMethods     String[] @default([])
+  id                     String       @id @default(cuid())
+  tenantId               String
+  itemCode               String       @unique
+  name                   String
+  type                   String       @default("GERAL")
+  groupId                String?
+  sif                    String?
+  notes                  String?
+  chilledHours           Int?
+  frozenHours            Int?
+  ambientHours           Int?
+  hotHours               Int?
+  thawingHours           Int?
+  methodQuente           Boolean      @default(false)
+  methodPistaFria        Boolean      @default(false)
+  methodDescongelando    Boolean      @default(false)
+  methodResfriado        Boolean      @default(false)
+  methodCongelado        Boolean      @default(false)
+  methodAmbienteSecos    Boolean      @default(false)
+  selectedMethods        String[]     @default([])
   preferredStorageMethod String?
-  prints       LabelPrint[]
-  createdAt    DateTime    @default(now())
-  updatedAt    DateTime    @updatedAt
+  createdAt              DateTime     @default(now())
+  updatedAt              DateTime     @updatedAt
+  group                  ItemGroup?   @relation(fields: [groupId], references: [id])
+  tenant                 Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  prints                 LabelPrint[]
 
   @@index([tenantId])
 }
@@ -90,12 +90,12 @@ model Item {
 model Method {
   id            Int      @id @default(autoincrement())
   tenantId      String
-  tenant        Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   name          String
   durationValue Int
   durationUnit  String
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
+  tenant        Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   @@unique([tenantId, name])
 }
@@ -103,13 +103,13 @@ model Method {
 model Unit {
   id          String   @id @default(cuid())
   tenantId    String
-  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   name        String
   email       String
   phone       String
   managerName String
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   @@unique([tenantId, name])
 }
@@ -117,11 +117,11 @@ model Unit {
 model ItemGroup {
   id        String   @id @default(cuid())
   tenantId  String
-  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   name      String
-  items     Item[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  items     Item[]
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   @@unique([tenantId, name])
 }
@@ -129,16 +129,16 @@ model ItemGroup {
 model PrinterConfig {
   id        String   @id @default(cuid())
   tenantId  String
-  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   name      String
   unit      String
   apiKey    String
   printerId Int
   isActive  Boolean  @default(true)
   userId    String?
-  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user      User?    @relation(fields: [userId], references: [id])
 
   @@unique([tenantId, unit])
 }
@@ -146,28 +146,28 @@ model PrinterConfig {
 model PasswordResetToken {
   id        String   @id @default(cuid())
   userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   tokenHash String   @unique
   expiresAt DateTime
   createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([expiresAt])
 }
 
 model LabelPrint {
-  id            String        @id @default(cuid())
+  id            String   @id @default(cuid())
   tenantId      String
-  tenant        Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   itemId        String
-  item          Item          @relation(fields: [itemId], references: [id], onDelete: Restrict)
   storageMethod String
   producedAt    DateTime
   expiresAt     DateTime
   userId        String
-  user          User          @relation(fields: [userId], references: [id], onDelete: Restrict)
   quantity      Int
-  createdAt     DateTime      @default(now())
+  createdAt     DateTime @default(now())
+  item          Item     @relation(fields: [itemId], references: [id])
+  tenant        Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user          User     @relation(fields: [userId], references: [id])
 
   @@index([tenantId])
 }
@@ -184,19 +184,16 @@ model Account {
   scope             String?
   id_token          String?
   session_state     String?
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@id([provider, providerAccountId])
 }
 
 model Session {
-  sessionToken String   @unique
+  sessionToken String   @id @unique
   userId       String
   expires      DateTime
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@id([sessionToken])
 }
 
 model VerificationToken {
