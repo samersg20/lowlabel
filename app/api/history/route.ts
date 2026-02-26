@@ -12,7 +12,12 @@ export async function GET(req: Request) {
 
   const where: any = { tenantId: scoped.tenantId };
   if (q) where.item = { name: { contains: q, mode: "insensitive" } };
-  if (unit && unit !== "TODAS") where.user = { unit };
+  if (unit && unit !== "TODAS") {
+    const db = tenantDb(scoped.tenantId);
+    const unitRow = await db.unit.findFirst({ where: { name: unit } });
+    if (!unitRow) return NextResponse.json({ error: "Unidade invÃ¡lida" }, { status: 400 });
+    where.user = { unit };
+  }
 
   const db = tenantDb(scoped.tenantId);
   const records = await db.labelPrint.findMany({

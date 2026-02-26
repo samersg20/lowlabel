@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
 import { createResetToken } from "@/lib/password-reset";
 import { sendResetPasswordEmail } from "@/lib/email";
+import { withRlsBypass } from "@/lib/rls";
 
 const EXPIRES_IN_MINUTES = 60;
 
@@ -14,26 +14,30 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "E-mail obrigatório" }, { status: 400 });
     }
 
-    const user = await prisma.user.findUnique({ where: { email } });
-    if (!user) {
-      return NextResponse.json({ ok: true });
-    }
+    const result = await withRlsBypass(async (tx) => {
+      const user = await tx.user.findUnique({ where: { email } });
+      if (!user) return { user: null as any, rawToken: "" };
 
-    const { rawToken, tokenHash } = createResetToken();
-    const expiresAt = new Date(Date.now() + EXPIRES_IN_MINUTES * 60 * 1000);
+      const { rawToken, tokenHash } = createResetToken();
+      const expiresAt = new Date(Date.now() + EXPIRES_IN_MINUTES * 60 * 1000);
 
-    await prisma.passwordResetToken.create({
-      data: {
-        userId: user.id,
-        tokenHash,
-        expiresAt,
-      },
+      await tx.passwordResetToken.create({
+        data: {
+          userId: user.id,
+          tokenHash,
+          expiresAt,
+        },
+      });
+
+      return { user, rawToken };
     });
 
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || new URL(req.url).origin;
-    const resetUrl = `${appUrl}/reset-password?token=${rawToken}`;
+    if (!result.user) return NextResponse.json({ ok: true });
 
-    await sendResetPasswordEmail(user.email, resetUrl);
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || new URL(req.url).origin;
+    const resetUrl = `${appUrl}/reset-password?token=${result.rawToken}`;
+
+    await sendResetPasswordEmail(result.user.email, resetUrl);
 
     return NextResponse.json({ ok: true });
   } catch (error) {

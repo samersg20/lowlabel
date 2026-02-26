@@ -22,6 +22,8 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ ok: true, results, model: AI_TEXT_MODEL });
   } catch (error: any) {
-    return NextResponse.json({ error: error?.message || "Falha ao emitir DIGITAR" }, { status: 500 });
+    const message = error?.message || "Falha ao emitir DIGITAR";
+    const status = message === "Unidade invÃ¡lida" ? 400 : 500;
+    return NextResponse.json({ error: message }, { status });
   }
 }
