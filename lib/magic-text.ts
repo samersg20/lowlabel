@@ -23,3 +23,9 @@ export function extractQuantity(segment: string) {
   const qty = Math.max(1, Number(match[1]));
   return { quantity: Number.isFinite(qty) ? qty : 1, text: match[2].trim() };
 }
+
+const BROKEN_CHARS = /[\uFFFD\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g;
+
+export function sanitizeText(input: string) {
+  return String(input || "").replace(BROKEN_CHARS, "");
+}

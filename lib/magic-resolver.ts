@@ -171,3 +171,13 @@ export async function resolveOneSegment(
     candidates,
   };
 }
+
+export async function resolveItemsFast(
+  { segments, tenantId }: { segments: Array<{ textNormalized: string }>; tenantId: string },
+  dbOverride?: any,
+) {
+  await preloadTenantItems(tenantId, dbOverride);
+  return Promise.all(
+    segments.map((segment) => resolveOneSegment({ textNormalized: segment.textNormalized, tenantId }, dbOverride)),
+  );
+}

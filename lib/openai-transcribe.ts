@@ -1,6 +1,6 @@
 ﻿const OPENAI_TRANSCRIBE_MODEL = process.env.OPENAI_TRANSCRIBE_MODEL || "gpt-4o-mini-transcribe";
 
-export async function transcribeAudio(file: File) {
+export async function transcribeAudio(file: File, language = "pt") {
   const apiKey = String(process.env.OPENAI_API_KEY || "")
     .trim()
     .replace(/^['\"]|['\"]$/g, "");
@@ -9,7 +9,7 @@ export async function transcribeAudio(file: File) {
   const payload = new FormData();
   payload.set("file", file);
   payload.set("model", OPENAI_TRANSCRIBE_MODEL);
-  payload.set("language", "pt");
+  if (language) payload.set("language", language);
   payload.set("response_format", "json");
 
   const openAiRes = await fetch("https://api.openai.com/v1/audio/transcriptions", {
