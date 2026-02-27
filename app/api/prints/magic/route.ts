@@ -1,17 +1,16 @@
-﻿import { NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { withTenantTx } from "@/lib/tenant-tx";
-import { resolveItemsFast, preloadTenantItems } from "@/lib/magic-resolver";
-import { parseAiPrintOrder } from "@/lib/ai-print";
+import { preloadTenantItems, resolveOneSegment } from "@/lib/magic-resolver";
 import { requireUnitForTenant } from "@/lib/unit-validation";
 import { submitRawZplToPrintNode } from "@/lib/printnode";
 import { makeZplLabel } from "@/lib/zpl";
 import { STORAGE_METHOD_RULES, STORAGE_METHODS, type StorageMethod } from "@/lib/constants";
-import { extractQuantity, splitSegments } from "@/lib/magic-text";
-import { saveAlias } from "@/lib/alias-resolver";
 import { transcribeAudio } from "@/lib/openai-transcribe";
+import { segmentMagicInput } from "@/lib/magic-segmentation";
+import { Prisma } from "@prisma/client";
 
-const AI_TEXT_MODEL = process.env.OPENAI_TEXT_MODEL || "gpt-4o-mini";
 const JSON_HEADERS = { "Content-Type": "application/json; charset=utf-8" };
+const THRESHOLD_OK = 0.8;
 
 function json(data: any, init?: { status?: number; headers?: HeadersInit }) {
   return NextResponse.json(data, {
@@ -47,20 +46,24 @@ export async function POST(req: Request) {
       let text = "";
       let source: "text" | "audio" | "none" = "none";
       let audio: File | null = null;
+      let preflight = false;
 
       if (contentType.includes("multipart/form-data")) {
         const form = await req.formData();
         const audioField = form.get("audio");
         const textField = String(form.get("text") || "").trim();
+        const preflightField = String(form.get("preflight") || "").toLowerCase();
         if (audioField instanceof File) audio = audioField;
         if (textField) {
           text = textField;
           source = "text";
         }
+        if (preflightField === "true" || preflightField === "1") preflight = true;
       } else {
         const body = await req.json().catch(() => ({}));
         text = String(body.text || "").trim();
         source = "text";
+        preflight = Boolean(body.preflight);
       }
 
       const preload = preloadTenantItems(tenantId, db);
@@ -81,31 +84,114 @@ export async function POST(req: Request) {
       }
 
       if (!text) return json({ error: "Texto é obrigatório" }, { status: 400 });
+
+      const segments = segmentMagicInput(text);
+      if (!segments.length) return json({ error: "Nenhum item válido encontrado" }, { status: 400 });
+
       console.time("local_resolve");
-      const local = await resolveItemsFast(text, tenantId, db);
+      const resolved = await Promise.all(
+        segments.map((segment) => resolveOneSegment({ textNormalized: segment.textNormalized, tenantId }, db)),
+      );
       console.timeEnd("local_resolve");
 
-      const useLocal = local.confidenceLevel === "high" && local.items.length > 0;
-      const useLocalWithWarning = local.confidenceLevel === "medium" && local.items.length > 0;
+      const segmentResults = segments.map((segment, index) => {
+        const resolvedSegment = resolved[index];
+        return {
+          index,
+          raw: segment.raw,
+          qty: segment.qty,
+          textNormalized: segment.textNormalized,
+          resolved: resolvedSegment.itemId
+            ? { itemId: resolvedSegment.itemId, itemName: resolvedSegment.itemName, confidence: resolvedSegment.confidence }
+            : { confidence: resolvedSegment.confidence },
+        };
+      });
 
-      if (useLocalWithWarning) {
-        console.warn("[magic] medium confidence", { tenantId, confidence: local.confidence });
-      }
-
-      let orders: any[] = [];
-      if (useLocal || useLocalWithWarning) {
-        orders = local.items.map((entry) => ({
-          item: entry.item,
-          quantity: entry.quantity,
-          storageMethod: pickDefaultMethod(entry.item),
+      const failed = segmentResults
+        .map((segment, index) => ({ segment, index, resolved: resolved[index] }))
+        .filter(({ resolved }) => !resolved.itemId || resolved.confidence < THRESHOLD_OK)
+        .map(({ segment, index, resolved }) => ({
+          index,
+          raw: segment.raw,
+          qty: segment.qty,
+          textNormalized: segment.textNormalized,
+          confidence: resolved.confidence,
+          topCandidates: resolved.candidates,
         }));
-      } else {
-        console.time("ai_fallback");
-        orders = await parseAiPrintOrder({ input: text, model: AI_TEXT_MODEL, maxQuantity: 10, tenantId, db });
-        console.timeEnd("ai_fallback");
+
+      if (failed.length) {
+        return json(
+          {
+            ok: false,
+            reason: "LOW_CONFIDENCE",
+            segments: segmentResults,
+            failed,
+            suggestions: failed.map((entry) => ({ index: entry.index, candidates: entry.topCandidates })),
+          },
+          { status: 400 },
+        );
       }
 
-      if (!orders.length) return json({ error: "Nenhum item válido encontrado" }, { status: 400 });
+      if (preflight) {
+        return json({
+          ok: true,
+          segments: segmentResults,
+          printed: [],
+          preflight: true,
+          source,
+          text,
+        });
+      }
+
+      const itemIds = Array.from(new Set(resolved.map((entry) => entry.itemId).filter(Boolean) as string[]));
+      if (!itemIds.length) return json({ error: "Nenhum item válido encontrado" }, { status: 400 });
+
+      const items: Array<
+        Prisma.ItemGetPayload<{
+          select: {
+            id: true;
+            name: true;
+            itemCode: true;
+            sif: true;
+            methodQuente: true;
+            methodPistaFria: true;
+            methodDescongelando: true;
+            methodResfriado: true;
+            methodCongelado: true;
+            methodAmbienteSecos: true;
+            preferredStorageMethod: true;
+          };
+        }>
+      > = await db.item.findMany({
+        where: { id: { in: itemIds } },
+        select: {
+          id: true,
+          name: true,
+          itemCode: true,
+          sif: true,
+          methodQuente: true,
+          methodPistaFria: true,
+          methodDescongelando: true,
+          methodResfriado: true,
+          methodCongelado: true,
+          methodAmbienteSecos: true,
+          preferredStorageMethod: true,
+        },
+      });
+      const itemById = new Map(items.map((item) => [item.id, item]));
+
+      const orders = new Map<string, { item: (typeof items)[number]; quantity: number }>();
+      segmentResults.forEach((segment) => {
+        const itemId = segment.resolved?.itemId;
+        if (!itemId) return;
+        const item = itemById.get(itemId);
+        if (!item) return;
+        const existing = orders.get(itemId);
+        const nextQty = (existing?.quantity ?? 0) + segment.qty;
+        orders.set(itemId, { item, quantity: nextQty });
+      });
+
+      if (!orders.size) return json({ error: "Nenhum item válido encontrado" }, { status: 400 });
 
       const printerConfig = await db.printerConfig.findFirst({ where: { unit: session.user.unit, isActive: true } });
       const printerId = printerConfig?.printerId || Number(process.env.PRINTNODE_PRINTER_ID || process.env.PRINTNODE_PRINT_ID || 0);
@@ -115,8 +201,8 @@ export async function POST(req: Request) {
       }
 
       const results: Array<{ itemName: string; quantity: number; method: string; jobIds: number[] }> = [];
-      for (const order of orders as any[]) {
-        const storageMethod = order.storageMethod ?? pickDefaultMethod(order.item);
+      for (const order of orders.values()) {
+        const storageMethod = pickDefaultMethod(order.item);
         if (!storageMethod) {
           return json({ error: `Item sem método habilitado: ${order.item.name}` }, { status: 400 });
         }
@@ -126,7 +212,7 @@ export async function POST(req: Request) {
         const multiplier = rule.unit === "hours" ? 60 * 60 * 1000 : 24 * 60 * 60 * 1000;
         const expiresAt = new Date(producedAt.getTime() + rule.amount * multiplier);
 
-        const print = await db.labelPrint.create({
+        await db.labelPrint.create({
           data: {
             tenantId,
             itemId: order.item.id,
@@ -151,19 +237,10 @@ export async function POST(req: Request) {
         results.push({ itemName: order.item.name, quantity: order.quantity, method: storageMethod, jobIds });
       }
 
-      if (!useLocal && local.confidenceLevel === "low") {
-        const segments = splitSegments(text).map((segment) => extractQuantity(segment).text);
-        for (let i = 0; i < Math.min(segments.length, orders.length); i += 1) {
-          await saveAlias(tenantId, segments[i], orders[i].item.id, db);
-        }
-      }
-
       return json({
         ok: true,
-        results,
-        model: useLocal || useLocalWithWarning ? "local" : AI_TEXT_MODEL,
-        confidence: local.confidence,
-        confidenceLevel: local.confidenceLevel,
+        segments: segmentResults,
+        printed: results,
         source,
         text,
       });
