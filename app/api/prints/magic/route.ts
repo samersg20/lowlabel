@@ -7,6 +7,7 @@ import { makeZplLabel } from "@/lib/zpl";
 import { STORAGE_METHOD_RULES, STORAGE_METHODS, type StorageMethod } from "@/lib/constants";
 import { transcribeAudio } from "@/lib/openai-transcribe";
 import { segmentMagicInput } from "@/lib/magic-segmentation";
+import { Prisma } from "@prisma/client";
 
 const JSON_HEADERS = { "Content-Type": "application/json; charset=utf-8" };
 const THRESHOLD_OK = 0.8;
@@ -145,7 +146,23 @@ export async function POST(req: Request) {
       const itemIds = Array.from(new Set(resolved.map((entry) => entry.itemId).filter(Boolean) as string[]));
       if (!itemIds.length) return json({ error: "Nenhum item válido encontrado" }, { status: 400 });
 
-      const items = await db.item.findMany({
+      const items: Array<
+        Prisma.ItemGetPayload<{
+          select: {
+            id: true;
+            name: true;
+            itemCode: true;
+            sif: true;
+            methodQuente: true;
+            methodPistaFria: true;
+            methodDescongelando: true;
+            methodResfriado: true;
+            methodCongelado: true;
+            methodAmbienteSecos: true;
+            preferredStorageMethod: true;
+          };
+        }>
+      > = await db.item.findMany({
         where: { id: { in: itemIds } },
         select: {
           id: true,
