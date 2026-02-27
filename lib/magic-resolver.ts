@@ -41,6 +41,34 @@ function diceCoefficient(a: string, b: string) {
   return (2 * intersection) / (a.length - 1 + (b.length - 1));
 }
 
+function levenshteinScore(a: string, b: string) {
+  if (!a || !b) return 0;
+  if (a === b) return 1;
+
+  const aLen = a.length;
+  const bLen = b.length;
+  const dp = Array.from({ length: aLen + 1 }, () => new Array<number>(bLen + 1).fill(0));
+
+  for (let i = 0; i <= aLen; i += 1) dp[i][0] = i;
+  for (let j = 0; j <= bLen; j += 1) dp[0][j] = j;
+
+  for (let i = 1; i <= aLen; i += 1) {
+    for (let j = 1; j <= bLen; j += 1) {
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+      dp[i][j] = Math.min(
+        dp[i - 1][j] + 1,
+        dp[i][j - 1] + 1,
+        dp[i - 1][j - 1] + cost,
+      );
+    }
+  }
+
+  const distance = dp[aLen][bLen];
+  const maxLen = Math.max(aLen, bLen);
+  if (!maxLen) return 0;
+  return Math.max(0, 1 - distance / maxLen);
+}
+
 async function loadItems(tenantId: string, dbOverride?: any) {
   const now = Date.now();
   const cached = cache.get(tenantId);
@@ -88,12 +116,17 @@ export async function resolveOneSegment(
   const query = textNormalized;
   if (!query) return { confidence: 0, candidates: [] };
 
-  let best: { item: (typeof items)[number]; score: number } | null = null;
+  let best: { item: (typeof items)[number]; score: number; similarity: number } | null = null;
   const scored = new Map<string, MagicCandidate>();
 
   const alias = await findAlias(tenantId, query, dbOverride);
   if (alias) {
-    best = { item: alias, score: 0.95 };
+    const aliasName = normalizeText(alias.name || "");
+    const aliasSimilarity = Math.max(
+      diceCoefficient(query, aliasName),
+      levenshteinScore(query, aliasName),
+    );
+    best = { item: alias, score: 0.95, similarity: aliasSimilarity };
     scored.set(alias.id, { id: alias.id, name: alias.name, score: 0.95 });
   }
 
@@ -101,14 +134,20 @@ export async function resolveOneSegment(
     const code = normalizeText(item.itemCode || "");
     const name = normalizeText(item.name || "");
     let score = 0;
+    const nameSimilarity = Math.max(
+      diceCoefficient(query, name),
+      levenshteinScore(query, name),
+    );
+    const codeSimilarity = code
+      ? Math.max(diceCoefficient(query, code), levenshteinScore(query, code))
+      : 0;
+    const similarity = Math.max(nameSimilarity, codeSimilarity);
+    score = Math.max(score, similarity);
 
     if (code && query.includes(code)) score = Math.max(score, 1);
     if (name && query === name) score = Math.max(score, 0.95);
     if (name && query.includes(name)) score = Math.max(score, 0.85);
     if (name && name.length >= 4 && query.includes(name)) score = Math.max(score, 0.8);
-
-    const similarity = diceCoefficient(query, name);
-    if (similarity > 0.6) score = Math.max(score, similarity);
 
     if (score > 0) {
       const existing = scored.get(item.id);
@@ -117,7 +156,7 @@ export async function resolveOneSegment(
       }
     }
     if (!best || score > best.score) {
-      best = { item, score };
+      best = { item, score, similarity };
     }
   }
 
@@ -128,7 +167,7 @@ export async function resolveOneSegment(
   return {
     itemId: best.item.id,
     itemName: best.item.name,
-    confidence: best.score,
+    confidence: best.similarity,
     candidates,
   };
 }

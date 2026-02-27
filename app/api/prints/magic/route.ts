@@ -10,7 +10,8 @@ import { segmentMagicInput } from "@/lib/magic-segmentation";
 import { Prisma } from "@prisma/client";
 
 const JSON_HEADERS = { "Content-Type": "application/json; charset=utf-8" };
-const THRESHOLD_OK = 0.8;
+const AUTO_PRINT_THRESHOLD = 0.85;
+const SUGGEST_THRESHOLD = 0.45;
 
 function json(data: any, init?: { status?: number; headers?: HeadersInit }) {
   return NextResponse.json(data, {
@@ -104,12 +105,13 @@ export async function POST(req: Request) {
           resolved: resolvedSegment.itemId
             ? { itemId: resolvedSegment.itemId, itemName: resolvedSegment.itemName, confidence: resolvedSegment.confidence }
             : { confidence: resolvedSegment.confidence },
+          candidates: resolvedSegment.candidates,
         };
       });
 
       const failed = segmentResults
         .map((segment, index) => ({ segment, index, resolved: resolved[index] }))
-        .filter(({ resolved }) => !resolved.itemId || resolved.confidence < THRESHOLD_OK)
+        .filter(({ resolved }) => !resolved.itemId || resolved.confidence < SUGGEST_THRESHOLD)
         .map(({ segment, index, resolved }) => ({
           index,
           raw: segment.raw,
@@ -132,12 +134,50 @@ export async function POST(req: Request) {
         );
       }
 
+      const suggestedSegments = segmentResults
+        .map((segment, index) => ({ segment, index, resolved: resolved[index] }))
+        .filter(({ resolved }) => resolved.itemId && resolved.confidence < AUTO_PRINT_THRESHOLD);
+
+      const previewItems = segmentResults.reduce(
+        (acc, segment) => {
+          const itemId = segment.resolved?.itemId;
+          const itemName = segment.resolved?.itemName;
+          if (!itemId || !itemName) return acc;
+          const existing = acc.get(itemId);
+          const confidence = segment.resolved?.confidence ?? 0;
+          if (!existing) {
+            acc.set(itemId, { itemId, itemName, quantity: segment.qty, confidence });
+          } else {
+            existing.quantity += segment.qty;
+            existing.confidence = Math.max(existing.confidence, confidence);
+          }
+          return acc;
+        },
+        new Map<string, { itemId: string; itemName: string; quantity: number; confidence: number }>(),
+      );
+
+      const previewList = Array.from(previewItems.values());
+
+      if (suggestedSegments.length) {
+        return json({
+          ok: true,
+          suggested: true,
+          segments: segmentResults,
+          candidates: suggestedSegments.map(({ index, segment }) => ({ index, candidates: segment.candidates })),
+          previewItems: previewList,
+          source,
+          text,
+        });
+      }
+
       if (preflight) {
         return json({
           ok: true,
           segments: segmentResults,
+          previewItems: previewList,
           printed: [],
           preflight: true,
+          suggested: false,
           source,
           text,
         });
@@ -240,7 +280,9 @@ export async function POST(req: Request) {
       return json({
         ok: true,
         segments: segmentResults,
+        previewItems: previewList,
         printed: results,
+        suggested: false,
         source,
         text,
       });
