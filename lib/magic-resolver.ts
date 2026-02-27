@@ -1,6 +1,6 @@
 import { tenantDb } from "@/lib/tenant-db";
 import { findAlias } from "@/lib/alias-resolver";
-import { extractQuantity, normalizeText, splitSegments } from "@/lib/magic-text";
+import { normalizeText } from "@/lib/magic-text";
 
 type CachedItems = {
   expiresAt: number;
@@ -72,60 +72,63 @@ export async function preloadTenantItems(tenantId: string, dbOverride?: any) {
   await loadItems(tenantId, dbOverride);
 }
 
-export async function resolveItemsFast(text: string, tenantId: string, dbOverride?: any) {
+export type MagicCandidate = { id: string; name: string; score: number };
+export type MagicResolvedSegment = {
+  itemId?: string;
+  itemName?: string;
+  confidence: number;
+  candidates: MagicCandidate[];
+};
+
+export async function resolveOneSegment(
+  { textNormalized, tenantId }: { textNormalized: string; tenantId: string },
+  dbOverride?: any,
+): Promise<MagicResolvedSegment> {
   const items = await loadItems(tenantId, dbOverride);
-  const segments = splitSegments(text);
-  const normalizedText = normalizeText(text);
-  const results = new Map<string, { item: (typeof items)[number]; quantity: number; score: number }>();
-  let totalScore = 0;
-  let matchedCount = 0;
+  const query = textNormalized;
+  if (!query) return { confidence: 0, candidates: [] };
 
-  for (const segment of segments) {
-    const { quantity, text: raw } = extractQuantity(segment);
-    const query = normalizeText(raw);
-    if (!query) continue;
+  let best: { item: (typeof items)[number]; score: number } | null = null;
+  const scored = new Map<string, MagicCandidate>();
 
-    let best: { item: (typeof items)[number]; score: number } | null = null;
+  const alias = await findAlias(tenantId, query, dbOverride);
+  if (alias) {
+    best = { item: alias, score: 0.95 };
+    scored.set(alias.id, { id: alias.id, name: alias.name, score: 0.95 });
+  }
 
-    const alias = await findAlias(tenantId, query, dbOverride);
-    if (alias) {
-      best = { item: alias, score: 0.95 };
-    }
+  for (const item of items) {
+    const code = normalizeText(item.itemCode || "");
+    const name = normalizeText(item.name || "");
+    let score = 0;
 
-    for (const item of items) {
-      const code = normalizeText(item.itemCode || "");
-      const name = normalizeText(item.name || "");
-      let score = 0;
+    if (code && query.includes(code)) score = Math.max(score, 1);
+    if (name && query === name) score = Math.max(score, 0.95);
+    if (name && query.includes(name)) score = Math.max(score, 0.85);
+    if (name && name.length >= 4 && query.includes(name)) score = Math.max(score, 0.8);
 
-      if (code && query.includes(code)) score = Math.max(score, 1);
-      if (name && query === name) score = Math.max(score, 0.95);
-      if (name && query.includes(name)) score = Math.max(score, 0.85);
-      if (name && name.length >= 4 && normalizedText.includes(name)) score = Math.max(score, 0.8);
+    const similarity = diceCoefficient(query, name);
+    if (similarity > 0.6) score = Math.max(score, similarity);
 
-      const similarity = diceCoefficient(query, name);
-      if (similarity > 0.6) score = Math.max(score, similarity);
-
-      if (!best || score > best.score) {
-        best = { item, score };
+    if (score > 0) {
+      const existing = scored.get(item.id);
+      if (!existing || score > existing.score) {
+        scored.set(item.id, { id: item.id, name: item.name, score });
       }
     }
-
-    if (best && best.score >= 0.35) {
-      const existing = results.get(best.item.id);
-      const nextQty = (existing?.quantity ?? 0) + quantity;
-      const nextScore = Math.max(existing?.score ?? 0, best.score);
-      results.set(best.item.id, { item: best.item, quantity: nextQty, score: nextScore });
-      totalScore += best.score;
-      matchedCount += 1;
+    if (!best || score > best.score) {
+      best = { item, score };
     }
   }
 
-  const confidence = matchedCount ? Math.min(1, totalScore / matchedCount) : 0;
-  const confidenceLevel = confidence >= 0.85 ? "high" : confidence >= 0.7 ? "medium" : "low";
+  const candidates = Array.from(scored.values()).sort((a, b) => b.score - a.score).slice(0, 5);
+
+  if (!best) return { confidence: 0, candidates };
 
   return {
-    items: Array.from(results.values()).map((r) => ({ item: r.item, quantity: r.quantity })),
-    confidence,
-    confidenceLevel,
+    itemId: best.item.id,
+    itemName: best.item.name,
+    confidence: best.score,
+    candidates,
   };
 }
