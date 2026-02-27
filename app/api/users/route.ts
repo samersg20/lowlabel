@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+﻿import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { isStrongPassword } from "@/lib/tenant";
 import { withTenantTx } from "@/lib/tenant-tx";
@@ -26,15 +26,15 @@ export async function POST(req: Request) {
     const unit = String(body.unit || session.user.unit || "").trim().toUpperCase();
 
     if (!email || !password || !isStrongPassword(password)) {
-      return NextResponse.json({ error: "Email e senha forte sÃ£o obrigatÃ³rios" }, { status: 400 });
+      return NextResponse.json({ error: "Email e senha forte são obrigatórios" }, { status: 400 });
     }
     if (!unit) {
-      return NextResponse.json({ error: "Unidade Ã© obrigatÃ³ria" }, { status: 400 });
+      return NextResponse.json({ error: "Unidade é obrigatória" }, { status: 400 });
     }
     try {
       await requireUnitForTenant(db, unit);
     } catch {
-      return NextResponse.json({ error: "Unidade invÃ¡lida" }, { status: 400 });
+      return NextResponse.json({ error: "Unidade inválida" }, { status: 400 });
     }
 
     const passwordHash = await bcrypt.hash(password, 10);
@@ -53,3 +53,6 @@ export async function POST(req: Request) {
     return NextResponse.json(created);
   });
 }
+
+
+

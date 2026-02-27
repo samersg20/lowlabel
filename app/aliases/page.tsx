@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState } from "react";
 
@@ -82,7 +82,7 @@ export default function AliasesPage() {
               <th>Alias</th>
               <th>Item</th>
               <th>Criado</th>
-              <th>AÃ§Ãµes</th>
+              <th>Ações</th>
             </tr>
           </thead>
           <tbody>
@@ -102,3 +102,7 @@ export default function AliasesPage() {
     </>
   );
 }
+
+
+
+

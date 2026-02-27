@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+﻿import { NextResponse } from "next/server";
 import { withTenantTx } from "@/lib/tenant-tx";
 import { resolveItemsFast, preloadTenantItems } from "@/lib/magic-resolver";
 import { parseAiPrintOrder } from "@/lib/ai-print";
@@ -8,9 +8,17 @@ import { makeZplLabel } from "@/lib/zpl";
 import { STORAGE_METHOD_RULES, STORAGE_METHODS, type StorageMethod } from "@/lib/constants";
 import { extractQuantity, splitSegments } from "@/lib/magic-text";
 import { saveAlias } from "@/lib/alias-resolver";
+import { transcribeAudio } from "@/lib/openai-transcribe";
 
 const AI_TEXT_MODEL = process.env.OPENAI_TEXT_MODEL || "gpt-4o-mini";
-const OPENAI_TRANSCRIBE_MODEL = process.env.OPENAI_TRANSCRIBE_MODEL || "gpt-4o-mini-transcribe";
+const JSON_HEADERS = { "Content-Type": "application/json; charset=utf-8" };
+
+function json(data: any, init?: { status?: number; headers?: HeadersInit }) {
+  return NextResponse.json(data, {
+    ...init,
+    headers: { ...JSON_HEADERS, ...(init?.headers || {}) },
+  });
+}
 
 function enabledMethodsForItem(item: any): StorageMethod[] {
   const methods: StorageMethod[] = [];
@@ -30,37 +38,6 @@ function pickDefaultMethod(item: any): StorageMethod | null {
   }
   return STORAGE_METHODS.find((m) => enabled.includes(m)) ?? null;
 }
-
-async function transcribeAudio(file: File) {
-  const apiKey = String(process.env.OPENAI_API_KEY || "")
-    .trim()
-    .replace(/^['\"]|['\"]$/g, "");
-  if (!apiKey) throw new Error("OPENAI_API_KEY nÃ£o configurada");
-
-  const payload = new FormData();
-  payload.set("file", file);
-  payload.set("model", OPENAI_TRANSCRIBE_MODEL);
-  payload.set("language", "pt");
-  payload.set("response_format", "json");
-
-  const openAiRes = await fetch("https://api.openai.com/v1/audio/transcriptions", {
-    method: "POST",
-    headers: { Authorization: `Bearer ${apiKey}` },
-    body: payload,
-  });
-
-  const data = await openAiRes.json().catch(() => ({}));
-  if (!openAiRes.ok) {
-    const message = String(data?.error?.message || "Falha na transcriÃ§Ã£o");
-    if (openAiRes.status === 401 || /invalid api key/i.test(message)) {
-      throw new Error("Invalid API Key. Use uma OPENAI_API_KEY vÃ¡lida.");
-    }
-    throw new Error(message);
-  }
-
-  return String(data.text || "").trim();
-}
-
 
 export async function POST(req: Request) {
   try {
@@ -103,7 +80,7 @@ export async function POST(req: Request) {
         await Promise.all([preload, unitCheck]);
       }
 
-      if (!text) return NextResponse.json({ error: "Texto Ã© obrigatÃ³rio" }, { status: 400 });
+      if (!text) return json({ error: "Texto é obrigatório" }, { status: 400 });
       console.time("local_resolve");
       const local = await resolveItemsFast(text, tenantId, db);
       console.timeEnd("local_resolve");
@@ -128,20 +105,20 @@ export async function POST(req: Request) {
         console.timeEnd("ai_fallback");
       }
 
-      if (!orders.length) return NextResponse.json({ error: "Nenhum item vÃ¡lido encontrado" }, { status: 400 });
+      if (!orders.length) return json({ error: "Nenhum item válido encontrado" }, { status: 400 });
 
       const printerConfig = await db.printerConfig.findFirst({ where: { unit: session.user.unit, isActive: true } });
       const printerId = printerConfig?.printerId || Number(process.env.PRINTNODE_PRINTER_ID || process.env.PRINTNODE_PRINT_ID || 0);
       const apiKey = printerConfig?.apiKey || process.env.PRINTNODE_API_KEY || "";
       if (!printerId || !apiKey) {
-        return NextResponse.json({ error: "Impressora nÃ£o configurada para a unidade do usuÃ¡rio" }, { status: 400 });
+        return json({ error: "Impressora não configurada para a unidade do usuário" }, { status: 400 });
       }
 
       const results: Array<{ itemName: string; quantity: number; method: string; jobIds: number[] }> = [];
       for (const order of orders as any[]) {
         const storageMethod = order.storageMethod ?? pickDefaultMethod(order.item);
         if (!storageMethod) {
-          return NextResponse.json({ error: `Item sem mÃ©todo habilitado: ${order.item.name}` }, { status: 400 });
+          return json({ error: `Item sem método habilitado: ${order.item.name}` }, { status: 400 });
         }
 
         const producedAt = new Date();
@@ -181,7 +158,7 @@ export async function POST(req: Request) {
         }
       }
 
-      return NextResponse.json({
+      return json({
         ok: true,
         results,
         model: useLocal || useLocalWithWarning ? "local" : AI_TEXT_MODEL,
@@ -192,7 +169,7 @@ export async function POST(req: Request) {
       });
     });
   } catch (error: any) {
-    return NextResponse.json({ error: error?.message || "Falha ao emitir etiquetas" }, { status: 500 });
+    return json({ error: error?.message || "Falha ao emitir etiquetas" }, { status: 500 });
   } finally {
     console.timeEnd("magic_total");
   }

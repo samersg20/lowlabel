@@ -9,22 +9,40 @@ export default withAuth(
   function middleware(req) {
     const token = req.nextauth.token;
     const { pathname } = req.nextUrl;
+    const isApiRoute = pathname.startsWith("/api/");
+    const isItemsExportApi = pathname.startsWith("/api/items/export");
 
-    if (!isOperator(token)) return NextResponse.next();
+    if (!isOperator(token)) {
+      if (isApiRoute && !isItemsExportApi) {
+        const res = NextResponse.next();
+        res.headers.set("Content-Type", "application/json; charset=utf-8");
+        return res;
+      }
+      return NextResponse.next();
+    }
 
     const isHomePage = pathname === "/";
     const isPrintPage = pathname === "/print";
     const isPrintEasyPage = pathname === "/print-easy";
     const isPrintVoicePage = pathname === "/print-voice";
+    const isPrintMagicPage = pathname === "/print-magic";
     const isPrintApi = pathname.startsWith("/api/prints");
     const isItemsReadApi = pathname.startsWith("/api/items") && req.method === "GET";
 
-    if (isHomePage || isPrintPage || isPrintEasyPage || isPrintVoicePage || isPrintApi || isItemsReadApi) {
+    if (isHomePage || isPrintPage || isPrintEasyPage || isPrintVoicePage || isPrintMagicPage || isPrintApi || isItemsReadApi) {
+      if (isApiRoute && !isItemsExportApi) {
+        const res = NextResponse.next();
+        res.headers.set("Content-Type", "application/json; charset=utf-8");
+        return res;
+      }
       return NextResponse.next();
     }
 
-    if (pathname.startsWith("/api/")) {
-      return NextResponse.json({ error: "forbidden" }, { status: 403 });
+    if (isApiRoute) {
+      return NextResponse.json({ error: "forbidden" }, {
+        status: 403,
+        headers: { "Content-Type": "application/json; charset=utf-8" },
+      });
     }
 
     return NextResponse.redirect(new URL("/", req.url));

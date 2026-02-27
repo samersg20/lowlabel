@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+﻿import { NextResponse } from "next/server";
 import { withTenantTx } from "@/lib/tenant-tx";
 
 type LegacyFlags = {
@@ -24,21 +24,21 @@ function selectedMethodsFromLegacy(body: LegacyFlags) {
 function sanitizeSelectedMethods(body: any): string[] {
   if (Array.isArray(body.selectedMethods)) {
     const unique = Array.from(new Set(body.selectedMethods.map((m: any) => String(m || "").trim().toUpperCase()).filter((m: string) => Boolean(m)))) as string[];
-    if (!unique.length) throw new Error("Selecione ao menos um mÃ©todo aplicÃ¡vel");
+    if (!unique.length) throw new Error("Selecione ao menos um método aplicável");
     return unique;
   }
 
   const legacy = selectedMethodsFromLegacy(body);
-  if (!legacy.length) throw new Error("Selecione ao menos um mÃ©todo aplicÃ¡vel");
+  if (!legacy.length) throw new Error("Selecione ao menos um método aplicável");
   return legacy;
 }
 
 function sanitizePreferredStorageMethod(body: any, enabledMethods: string[]): string {
   const preferred = typeof body.preferredStorageMethod === "string" ? body.preferredStorageMethod.trim().toUpperCase() : "";
   if (!preferred) {
-    throw new Error("MÃ©todo principal Ã© obrigatÃ³rio");
+    throw new Error("Método principal é obrigatório");
   }
-  if (!enabledMethods.includes(preferred)) throw new Error("MÃ©todo principal precisa estar habilitado");
+  if (!enabledMethods.includes(preferred)) throw new Error("Método principal precisa estar habilitado");
   return preferred;
 }
 
@@ -65,7 +65,7 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
       selectedMethods = sanitizeSelectedMethods(body);
       preferredStorageMethod = sanitizePreferredStorageMethod(body, selectedMethods);
     } catch (error: any) {
-      return NextResponse.json({ error: error?.message || "Dados invÃ¡lidos" }, { status: 400 });
+      return NextResponse.json({ error: error?.message || "Dados inválidos" }, { status: 400 });
     }
 
     const flags = legacyFlagsFromSelected(selectedMethods);
@@ -103,3 +103,5 @@ export async function DELETE(_req: Request, { params }: { params: { id: string }
     return NextResponse.json({ ok: true });
   });
 }
+
+

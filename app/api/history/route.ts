@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+﻿import { NextResponse } from "next/server";
 import { withTenantTx } from "@/lib/tenant-tx";
 
 export async function GET(req: Request) {
@@ -11,7 +11,7 @@ export async function GET(req: Request) {
     if (q) where.item = { name: { contains: q, mode: "insensitive" } };
     if (unit && unit !== "TODAS") {
       const unitRow = await db.unit.findFirst({ where: { name: unit } });
-      if (!unitRow) return NextResponse.json({ error: "Unidade invÃ¡lida" }, { status: 400 });
+      if (!unitRow) return NextResponse.json({ error: "Unidade inválida" }, { status: 400 });
       where.user = { unit };
     }
 
@@ -25,3 +25,6 @@ export async function GET(req: Request) {
     return NextResponse.json(records);
   });
 }
+
+
+

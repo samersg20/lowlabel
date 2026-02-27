@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import { signOut, useSession } from "next-auth/react";
@@ -45,8 +45,7 @@ export function Nav() {
           {openEmitir && (
             <div className="nav-dropdown-menu">
               <Link href="/print">Tradicional</Link>
-              <Link href="/print-easy">Texto IA</Link>
-              <Link href="/print-voice">Voz IA</Link>
+              <Link href="/print-magic">Mágico</Link>
             </div>
           )}
         </div>

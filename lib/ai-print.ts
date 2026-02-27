@@ -1,4 +1,4 @@
-import { STORAGE_METHOD_RULES, STORAGE_METHODS, type StorageMethod } from "@/lib/constants";
+﻿import { STORAGE_METHOD_RULES, STORAGE_METHODS, type StorageMethod } from "@/lib/constants";
 import { tenantDb } from "@/lib/tenant-db";
 import { makeZplLabel } from "@/lib/zpl";
 import { submitRawZplToPrintNode } from "@/lib/printnode";
@@ -95,7 +95,7 @@ export async function processAiPrintOrder({
   try {
     await requireUnitForTenant(db, sessionUser.unit);
   } catch {
-    throw new Error("Unidade invÃ¡lida");
+    throw new Error("Unidade inválida");
   }
 
   const printerConfig = await db.printerConfig.findFirst({ where: { unit: sessionUser.unit, isActive: true } });
@@ -209,3 +209,6 @@ export async function parseAiPrintOrder({
 
   return parsedResults;
 }
+
+
+

@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+﻿import { NextResponse } from "next/server";
 import { withTenantTx } from "@/lib/tenant-tx";
 import { normalizeText } from "@/lib/magic-text";
 
@@ -23,10 +23,10 @@ export async function POST(req: Request) {
     const alias = normalizeText(rawAlias);
     const itemId = String(body.itemId || "").trim();
 
-    if (!alias || !itemId) return NextResponse.json({ error: "Alias e item sÃ£o obrigatÃ³rios" }, { status: 400 });
+    if (!alias || !itemId) return NextResponse.json({ error: "Alias e item são obrigatórios" }, { status: 400 });
 
     const item = await db.item.findFirst({ where: { id: itemId } });
-    if (!item) return NextResponse.json({ error: "Item invÃ¡lido" }, { status: 400 });
+    if (!item) return NextResponse.json({ error: "Item inválido" }, { status: 400 });
 
     try {
       const created = await db.itemAlias.create({
@@ -40,9 +40,12 @@ export async function POST(req: Request) {
       return NextResponse.json(created, { status: 201 });
     } catch (error: any) {
       if (error?.code === "P2002") {
-        return NextResponse.json({ error: "Alias jÃ¡ existe" }, { status: 409 });
+        return NextResponse.json({ error: "Alias já existe" }, { status: 409 });
       }
       throw error;
     }
   });
 }
+
+
+

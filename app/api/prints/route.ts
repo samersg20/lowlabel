@@ -1,9 +1,18 @@
-import { NextResponse } from "next/server";
+﻿import { NextResponse } from "next/server";
 import { STORAGE_METHOD_RULES } from "@/lib/constants";
 import { submitRawZplToPrintNode } from "@/lib/printnode";
 import { makeZplLabel } from "@/lib/zpl";
 import { withTenantTx } from "@/lib/tenant-tx";
 import { requireUnitForTenant } from "@/lib/unit-validation";
+
+const JSON_HEADERS = { "Content-Type": "application/json; charset=utf-8" };
+
+function json(data: any, init?: { status?: number; headers?: HeadersInit }) {
+  return NextResponse.json(data, {
+    ...init,
+    headers: { ...JSON_HEADERS, ...(init?.headers || {}) },
+  });
+}
 
 function legacyMethods(item: any) {
   const methods: string[] = [];
@@ -23,17 +32,17 @@ export async function POST(req: Request) {
       const quantity = Number(body.quantity);
 
       if (!body.itemId || !body.storageMethod || !Number.isInteger(quantity) || quantity < 1 || quantity > 20) {
-        return NextResponse.json({ error: "Dados invÃ¡lidos (itemId/storageMethod/quantity)" }, { status: 400 });
+        return json({ error: "Dados inválidos (itemId/storageMethod/quantity)" }, { status: 400 });
       }
 
       try {
         await requireUnitForTenant(db, session.user.unit);
       } catch {
-        return NextResponse.json({ error: "Unidade invÃ¡lida" }, { status: 400 });
+        return json({ error: "Unidade inválida" }, { status: 400 });
       }
 
       const item = await db.item.findFirst({ where: { id: body.itemId } });
-      if (!item) return NextResponse.json({ error: "Item nÃ£o encontrado" }, { status: 404 });
+      if (!item) return json({ error: "Item não encontrado" }, { status: 404 });
 
       const selectedMethods = (Array.isArray(item.selectedMethods) && item.selectedMethods.length
         ? item.selectedMethods
@@ -41,7 +50,7 @@ export async function POST(req: Request) {
 
       const requestedMethod = String(body.storageMethod || "").trim().toUpperCase();
       if (!selectedMethods.includes(requestedMethod)) {
-        return NextResponse.json({ error: "MÃ©todo nÃ£o habilitado para este item" }, { status: 400 });
+        return json({ error: "Método não habilitado para este item" }, { status: 400 });
       }
 
       const methodConfig = await db.method.findFirst({
@@ -50,7 +59,7 @@ export async function POST(req: Request) {
       });
 
       const fallback = STORAGE_METHOD_RULES[requestedMethod as keyof typeof STORAGE_METHOD_RULES];
-      if (!methodConfig && !fallback) return NextResponse.json({ error: "MÃ©todo invÃ¡lido" }, { status: 400 });
+      if (!methodConfig && !fallback) return json({ error: "Método inválido" }, { status: 400 });
 
       const producedAt = new Date();
       const amount = methodConfig?.durationValue ?? fallback!.amount;
@@ -78,14 +87,14 @@ export async function POST(req: Request) {
       const apiKey = printerConfig?.apiKey || process.env.PRINTNODE_API_KEY || "";
 
       if (!printerId || !apiKey) {
-        return NextResponse.json({ error: "Impressora nÃ£o configurada para a unidade do usuÃ¡rio" }, { status: 400 });
+        return json({ error: "Impressora não configurada para a unidade do usuário" }, { status: 400 });
       }
 
       const jobIds = await submitRawZplToPrintNode(zpl, quantity, `Etiqueta ${item.name}`, { apiKey, printerId });
 
-      return NextResponse.json({ ok: true, printId: print.id, quantity, jobIds });
+      return json({ ok: true, printId: print.id, quantity, jobIds });
     });
   } catch (error: any) {
-    return NextResponse.json({ error: error?.message || "Falha ao emitir etiqueta" }, { status: 500 });
+    return json({ error: error?.message || "Falha ao emitir etiqueta" }, { status: 500 });
   }
 }
