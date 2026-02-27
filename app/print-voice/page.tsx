@@ -1,10 +1,5 @@
-import MagicPrint from "@/components/MagicPrint";
+﻿import { redirect } from "next/navigation";
 
 export default function PrintVoicePage() {
-  return (
-    <>
-      <h1>Imprimir (MÃ¡gica)</h1>
-      <MagicPrint />
-    </>
-  );
+  redirect("/print-magic");
 }

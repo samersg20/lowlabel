@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+﻿import { NextResponse } from "next/server";
 import { withTenantTx } from "@/lib/tenant-tx";
 
 export async function GET(req: Request) {
@@ -18,9 +18,12 @@ export async function POST(req: Request) {
     const phone = String(body.phone || "").trim();
     const managerName = String(body.managerName || "").trim();
 
-    if (!name || !email || !phone || !managerName) return NextResponse.json({ error: "Dados obrigatÃ³rios" }, { status: 400 });
+    if (!name || !email || !phone || !managerName) return NextResponse.json({ error: "Dados obrigatórios" }, { status: 400 });
 
     const created = await db.unit.create({ data: { tenantId, name, email, phone, managerName } });
     return NextResponse.json(created);
   });
 }
+
+
+

@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+﻿import { NextResponse } from "next/server";
 import { withTenantTx } from "@/lib/tenant-tx";
 import { requireUnitForTenant } from "@/lib/unit-validation";
 
@@ -23,13 +23,13 @@ export async function POST(req: Request) {
     const printerId = Number(body.printerId);
 
     if (!unit || !name || !apiKey || !Number.isInteger(printerId) || printerId <= 0) {
-      return NextResponse.json({ error: "Dados invÃ¡lidos" }, { status: 400 });
+      return NextResponse.json({ error: "Dados inválidos" }, { status: 400 });
     }
 
     try {
       await requireUnitForTenant(db, unit);
     } catch {
-      return NextResponse.json({ error: "Unidade invÃ¡lida" }, { status: 400 });
+      return NextResponse.json({ error: "Unidade inválida" }, { status: 400 });
     }
 
     const tenant = await db.tenant.findFirst({ where: { id: tenantId } });
@@ -54,3 +54,6 @@ export async function POST(req: Request) {
     return NextResponse.json(created);
   });
 }
+
+
+

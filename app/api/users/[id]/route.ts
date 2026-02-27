@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+﻿import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { withTenantTx } from "@/lib/tenant-tx";
 import { requireUnitForTenant } from "@/lib/unit-validation";
@@ -13,7 +13,7 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
       try {
         await requireUnitForTenant(db, unit);
       } catch {
-        return NextResponse.json({ error: "Unidade invÃ¡lida" }, { status: 400 });
+        return NextResponse.json({ error: "Unidade inválida" }, { status: 400 });
       }
     }
 
@@ -43,3 +43,5 @@ export async function DELETE(_req: Request, { params }: { params: { id: string }
     return NextResponse.json({ ok: true });
   });
 }
+
+

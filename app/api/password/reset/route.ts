@@ -1,4 +1,4 @@
-import bcrypt from "bcryptjs";
+﻿import bcrypt from "bcryptjs";
 import { NextResponse } from "next/server";
 import { hashResetToken } from "@/lib/password-reset";
 import { withRlsBypassTx } from "@/lib/tenant-tx";
@@ -9,7 +9,7 @@ export async function POST(req: Request) {
   const password = typeof body.password === "string" ? body.password : "";
 
   if (!token || !password || password.length < 6) {
-    return NextResponse.json({ error: "Token invÃ¡lido ou senha muito curta" }, { status: 400 });
+    return NextResponse.json({ error: "Token inválido ou senha muito curta" }, { status: 400 });
   }
 
   const tokenHash = hashResetToken(token);
@@ -29,8 +29,11 @@ export async function POST(req: Request) {
   });
 
   if (!result.ok) {
-    return NextResponse.json({ error: "Token invÃ¡lido ou expirado" }, { status: 400 });
+    return NextResponse.json({ error: "Token inválido ou expirado" }, { status: 400 });
   }
 
   return NextResponse.json({ ok: true });
 }
+
+
+
